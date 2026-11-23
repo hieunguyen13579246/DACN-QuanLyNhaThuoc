@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/main :: layout('Trang chủ điều hành', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-house-door me-2 text-primary"></i>Trang chủ điều hành – Chuỗi nhà thuốc IS009</h5>
+            <small class="text-muted">Tổng hợp doanh thu hôm nay, cảnh báo hạn dùng/tồn kho và lối tắt nghiệp vụ theo vai trò</small>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Doanh thu hôm nay</div>
+                <div class="kpi-value text-primary" th:text="${#numbers.formatDecimal(kpi.doanhThuHomNay, 0, 'POINT', 0, 'COMMA') + ' ₫'}">0 ₫</div>
+                <small class="text-muted" th:text="${kpi.soGiaoDichHomNay + ' giao dịch hoàn thành'}"></small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Doanh thu 30 ngày qua</div>
+                <div class="kpi-value" th:text="${#numbers.formatDecimal(kpi.doanhThu30Ngay, 0, 'POINT', 0, 'COMMA') + ' ₫'}">0 ₫</div>
+                <small class="text-muted" th:text="${kpi.soGiaoDich30Ngay + ' giao dịch hoàn thành'}"></small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Tổng giá trị tồn kho (Giá vốn)</div>
+                <div class="kpi-value text-success" th:text="${#numbers.formatDecimal(kpi.tongGiaTriTonKho, 0, 'POINT', 0, 'COMMA') + ' ₫'}">0 ₫</div>
+                <small class="text-muted">Phiếu chờ duyệt: <strong th:text="${kpi.soPhieuChoDuyet}">0</strong></small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Tổng cảnh báo cần xử lý</div>
+                <div class="kpi-value text-danger"
+                     th:text="${(canhBao.soLoHetHan + canhBao.soLoCanHan30 + canhBao.soThuocHetHang + canhBao.soThuocTonThap) + ' mục'}">0 mục</div>
+                <small class="text-muted">
+                    Hết hạn: <strong class="text-danger" th:text="${canhBao.soLoHetHan}">0</strong> |
+                    Tồn thấp: <strong class="text-warning" th:text="${canhBao.soThuocHetHang + canhBao.soThuocTonThap}">0</strong>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Cột trái: Lối tắt nghiệp vụ theo vai trò -->
+        <div class="col-lg-7">
+            <div class="card card-clean h-100">
+                <div class="card-header bg-white py-2">
+                    <span class="fw-bold"><i class="bi bi-lightning-charge me-1 text-primary"></i>Lối tắt tác vụ nhanh theo vai trò</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6" sec:authorize="hasAnyAuthority('DUOCSI','QUANLY')">
+                            <a th:href="@{/banhang/pos}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-cart-check me-2"></i>Bán hàng tại quầy (POS)</div>
+                                <small class="text-muted d-block mt-1">Quét mã vạch, tự động phân lô FEFO & in hóa đơn</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6" sec:authorize="hasAnyAuthority('DUOCSI','QUANLY','QUANTRI')">
+                            <a th:href="@{/donthuoc}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-file-earmark-medical me-2"></i>Tiếp nhận đơn thuốc</div>
+                                <small class="text-muted d-block mt-1">Quản lý đơn thuốc kê đơn & theo dõi số lượng đã bán</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6">
+                            <a th:href="@{/thuoc/tra-cuu}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-upc-scan me-2"></i>Tra cứu thuốc bằng mã vạch</div>
+                                <small class="text-muted d-block mt-1">Quét EAN-13/Code128 xem thông tin thuốc & lô FEFO</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6" sec:authorize="hasAuthority('THUKHO')">
+                            <a th:href="@{/kho/nhap-kho}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-box-arrow-in-down me-2"></i>Nhập kho (Hỗ trợ GS1)</div>
+                                <small class="text-muted d-block mt-1">Quét mã vạch / chuỗi GS1 tự điền số lô & hạn dùng</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6">
+                            <a th:href="@{/kho/ton-kho}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-boxes me-2"></i>Tồn kho theo thuốc & lô</div>
+                                <small class="text-muted d-block mt-1">Theo dõi tồn thực tế, giữ chỗ và khả dụng</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6" sec:authorize="hasAnyAuthority('QUANLY','QUANTRI')">
+                            <a th:href="@{/kho/duyet-phieu}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-check2-square me-2"></i>Duyệt phiếu kho</div>
+                                <small class="text-muted d-block mt-1">Duyệt hoặc từ chối phiếu điều chuyển / xuất hủy</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6" sec:authorize="hasAnyAuthority('QUANLY','QUANTRI')">
+                            <a th:href="@{/thongke/de-xuat-nhap}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-lightbulb me-2"></i>Đề xuất nhập hàng</div>
+                                <small class="text-muted d-block mt-1">Tính toán tự động theo tốc độ bán & lead time</small>
+                            </a>
+                        </div>
+                        <div class="col-sm-6" sec:authorize="hasAuthority('QUANTRI')">
+                            <a th:href="@{/thongke/dashboard-chuoi}" class="btn btn-outline-primary w-100 text-start p-3">
+                                <div class="fw-bold"><i class="bi bi-bar-chart-line me-2"></i>Dashboard toàn chuỗi</div>
+                                <small class="text-muted d-block mt-1">Phân tích nhu cầu dược phẩm theo khu vực & xuất CSV</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Tóm tắt cảnh báo hạn dùng & tồn kho -->
+        <div class="col-lg-5">
+            <div class="card card-clean h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold"><i class="bi bi-bell me-1 text-danger"></i>Tóm tắt cảnh báo kho & hạn dùng</span>
+                    <a th:href="@{/canhbao}" class="btn btn-sm btn-link text-decoration-none p-0">Xem chi tiết cảnh báo →</a>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge badge-exp-expired me-2">Đỏ</span>Lô thuốc đã hết hạn sử dụng</span>
+                            <span class="fw-bold text-danger" th:text="${canhBao.soLoHetHan + ' lô'}"></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge badge-exp-30 me-2">Cam</span>Lô cận hạn ≤ 30 ngày</span>
+                            <span class="fw-bold" th:text="${canhBao.soLoCanHan30 + ' lô'}"></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge badge-exp-60 me-2">Vàng</span>Lô cận hạn 31 – 60 ngày</span>
+                            <span class="fw-bold" th:text="${canhBao.soLoCanHan60 + ' lô'}"></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge badge-exp-90 me-2">Xanh</span>Lô cận hạn 61 – 90 ngày</span>
+                            <span class="fw-bold" th:text="${canhBao.soLoCanHan90 + ' lô'}"></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge bg-danger me-2">Hết hàng</span>Thuốc có tồn khả dụng = 0</span>
+                            <span class="fw-bold text-danger" th:text="${canhBao.soThuocHetHang + ' thuốc'}"></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge bg-warning text-dark me-2">Tồn thấp</span>Thuốc dưới định mức tối thiểu</span>
+                            <span class="fw-bold text-warning" th:text="${canhBao.soThuocTonThap + ' thuốc'}"></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><span class="badge bg-secondary me-2">Tồn chậm</span>Lô tồn chậm luân chuyển</span>
+                            <span class="fw-bold" th:text="${canhBao.soLoTonCham + ' lô'}"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

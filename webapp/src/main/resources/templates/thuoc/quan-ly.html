@@ -1,0 +1,238 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Danh mục thuốc, nhóm & mã vạch', ~{::section}, ~{::script})}">
+<body>
+<section>
+    <div class="row g-3 mb-3">
+        <div class="col-lg-8">
+            <div class="card p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0">Bộ lọc &amp; Tìm kiếm danh mục thuốc</h6>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnMoModalNhom">
+                            + Thêm nhóm thuốc
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnMoModalThuoc">
+                            + Thêm thuốc mới
+                        </button>
+                    </div>
+                </div>
+                <form th:action="@{/thuoc/quan-ly}" method="get" class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" name="tuKhoa" class="form-control form-control-sm"
+                               th:value="${tuKhoa}" placeholder="Tìm mã thuốc, tên biệt dược, hoạt chất...">
+                    </div>
+                    <div class="col-md-4">
+                        <select name="nhomThuocId" class="form-select form-select-sm">
+                            <option value="">-- Tất cả nhóm thuốc --</option>
+                            <option th:each="n : ${danhSachNhom}"
+                                    th:value="${n.id}"
+                                    th:selected="${nhomThuocId != null and nhomThuocId == n.id}"
+                                    th:text="${n.ma + ' - ' + n.ten}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-1">
+                        <button type="submit" class="btn btn-sm btn-primary flex-grow-1">Lọc</button>
+                        <a th:href="@{/thuoc/quan-ly}" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card p-3">
+                <h6 class="fw-bold mb-2">Gán mã vạch nhanh (sp_ThemMaVach)</h6>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <select id="mvThuocId" class="form-select form-select-sm">
+                            <option value="">-- Chọn thuốc cần gán mã vạch --</option>
+                            <option th:each="t : ${danhSachThuoc}"
+                                    th:value="${t.id}"
+                                    th:text="${t.ma + ' - ' + t.ten}"></option>
+                        </select>
+                    </div>
+                    <div class="col-5">
+                        <select id="mvLoai" class="form-select form-select-sm">
+                            <option value="EAN13">EAN13 (13 số)</option>
+                            <option value="GTIN14">GTIN14</option>
+                            <option value="CODE128">CODE128</option>
+                            <option value="NOI_BO">NOI_BO</option>
+                        </select>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" id="mvInputCode" class="form-control form-control-sm"
+                               placeholder="Nhập 13 số EAN-13...">
+                    </div>
+                    <div class="col-12">
+                        <div id="mvEan13Feedback" class="form-text"></div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="mvLaMaChinh" checked>
+                            <label class="form-check-label small" for="mvLaMaChinh">Đặt làm mã chính</label>
+                        </div>
+                        <button type="button" id="btnLuuMaVach" class="btn btn-sm btn-primary">Gán mã vạch</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên thuốc</th>
+                    <th>Hoạt chất</th>
+                    <th>ĐVT</th>
+                    <th>Nhóm</th>
+                    <th>Kê đơn</th>
+                    <th class="text-end">Giá bán lẻ</th>
+                    <th>Mã vạch chính</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${danhSachThuoc}">
+                    <td class="fw-semibold" th:text="${t.ma}"></td>
+                    <td th:text="${t.ten}"></td>
+                    <td class="small" th:text="${t.hoatChat}"></td>
+                    <td th:text="${t.donViTinh}"></td>
+                    <td class="small" th:text="${t.tenNhomThuoc}"></td>
+                    <td>
+                        <span th:if="${t.canKeDon}" class="badge bg-danger">Kê đơn</span>
+                        <span th:unless="${t.canKeDon}" class="badge bg-secondary">OTC</span>
+                    </td>
+                    <td class="text-end fw-semibold"
+                        th:text="${#numbers.formatDecimal(t.giaBanLe, 0, 'POINT', 0, 'COMMA')} + ' đ'"></td>
+                    <td><code th:text="${t.maVachChinh ?: 'Chưa gán'}"></code></td>
+                    <td>
+                        <span th:if="${t.trangThai == 'DANG_BAN'}" class="badge bg-success">Đang bán</span>
+                        <span th:unless="${t.trangThai == 'DANG_BAN'}" class="badge bg-secondary">Ngừng bán</span>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 js-btn-edit-thuoc"
+                                th:data-id="${t.id}"
+                                th:data-ma="${t.ma}"
+                                th:data-ten="${t.ten}"
+                                th:data-hoatchat="${t.hoatChat}"
+                                th:data-hamluong="${t.hamLuong}"
+                                th:data-dangbaoche="${t.dangBaoChe}"
+                                th:data-dvt="${t.donViTinh}"
+                                th:data-nhomid="${t.nhomThuocId}"
+                                th:data-nsx="${t.nhaSanXuat}"
+                                th:data-cankedon="${t.canKeDon}"
+                                th:data-giabanle="${t.giaBanLe}"
+                                th:data-trangthai="${t.trangThai}">
+                            Sửa
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Thêm/Sửa Thuốc -->
+    <div class="modal" id="modalThuoc" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold" id="modalThuocTitle">Thêm thuốc mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="formThuocId">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Mã thuốc *</label>
+                            <input type="text" id="formThuocMa" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-semibold">Tên biệt dược *</label>
+                            <input type="text" id="formThuocTen" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Hoạt chất *</label>
+                            <input type="text" id="formThuocHoatChat" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Hàm lượng</label>
+                            <input type="text" id="formThuocHamLuong" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Dạng bào chế</label>
+                            <input type="text" id="formThuocDangBaoChe" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Đơn vị tính *</label>
+                            <input type="text" id="formThuocDvt" class="form-control form-control-sm" value="Viên" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">Nhóm thuốc *</label>
+                            <select id="formThuocNhomId" class="form-select form-select-sm">
+                                <option th:each="n : ${danhSachNhom}" th:value="${n.id}" th:text="${n.ten}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Giá bán lẻ (VND) *</label>
+                            <input type="number" id="formThuocGiaBanLe" class="form-control form-control-sm" min="100" step="100" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">Nhà sản xuất</label>
+                            <input type="text" id="formThuocNsx" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Trạng thái</label>
+                            <select id="formThuocTrangThai" class="form-select form-select-sm">
+                                <option value="DANG_BAN">DANG_BAN</option>
+                                <option value="NGUNG_BAN">NGUNG_BAN</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="formThuocCanKeDon">
+                                <label class="form-check-label small fw-semibold" for="formThuocCanKeDon">Bắt buộc kê đơn</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" id="btnSubmitThuoc" class="btn btn-sm btn-primary">Lưu thuốc</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Nhóm Thuốc -->
+    <div class="modal" id="modalNhomThuoc" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold">Thêm nhóm thuốc</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Mã nhóm *</label>
+                        <input type="text" id="formNhomMa" class="form-control form-control-sm" placeholder="VD: KS">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Tên nhóm *</label>
+                        <input type="text" id="formNhomTen" class="form-control form-control-sm" placeholder="VD: Kháng sinh">
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" id="btnSubmitNhom" class="btn btn-sm btn-primary w-100">Lưu nhóm thuốc</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script th:src="@{/js/thuoc/danh-muc-thuoc.js}"></script>
+</body>
+</html>

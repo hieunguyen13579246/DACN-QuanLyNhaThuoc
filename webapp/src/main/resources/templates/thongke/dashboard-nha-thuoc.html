@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Dashboard nhà thuốc', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3"
+         id="dashboardNtRoot"
+         th:data-nha-thuoc-id="${nhaThuocId}"
+         th:data-tu-ngay="${tuNgay}"
+         th:data-den-ngay="${denNgay}">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard hoạt động nhà thuốc</h5>
+            <small class="text-muted">Theo dõi doanh thu, xu hướng tháng (<code>sp_ThongKeXuHuong</code>), top thuốc bán chạy (<code>sp_ThongKeTopThuoc</code>) và KPI vận hành</small>
+        </div>
+        <div class="btn-group btn-group-sm shadow-sm">
+            <a th:href="@{/api/thongke/excel/top-thuoc(nhaThuocId=${nhaThuocId},tuNgay=${tuNgay},denNgay=${denNgay})}"
+               class="btn btn-success">
+                <i class="bi bi-file-earmark-excel-fill me-1"></i>Xuất Excel Top thuốc (.xlsx)
+            </a>
+        </div>
+    </div>
+
+    <!-- Bộ lọc khoảng ngày -->
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/thongke/dashboard-nha-thuoc}" class="row g-2 align-items-end">
+                <div class="col-md-4" th:if="${danhSachNhaThuoc != null}">
+                    <label class="form-label small mb-1">Nhà thuốc</label>
+                    <select name="nhaThuocId" class="form-select form-select-sm">
+                        <option value="">-- Toàn chuỗi --</option>
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:selected="${nhaThuocId == nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Từ ngày</label>
+                    <input type="date" name="tuNgay" class="form-control form-control-sm" th:value="${tuNgay}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Đến ngày</label>
+                    <input type="date" name="denNgay" class="form-control form-control-sm" th:value="${denNgay}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Doanh thu hôm nay</div>
+                <div class="kpi-value text-primary" th:text="${#numbers.formatDecimal(kpi.doanhThuHomNay, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></div>
+                <small class="text-muted" th:text="${kpi.soGiaoDichHomNay + ' giao dịch'}"></small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Doanh thu 30 ngày</div>
+                <div class="kpi-value" th:text="${#numbers.formatDecimal(kpi.doanhThu30Ngay, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></div>
+                <small class="text-muted" th:text="${kpi.soGiaoDich30Ngay + ' giao dịch'}"></small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Giá trị tồn kho hiện tại</div>
+                <div class="kpi-value text-success" th:text="${#numbers.formatDecimal(kpi.tongGiaTriTonKho, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></div>
+                <small class="text-muted">Tính theo giá nhập lô</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Cảnh báo hạn dùng / Tồn thấp</div>
+                <div class="kpi-value text-danger"
+                     th:text="${(canhBao.soLoHetHan + canhBao.soLoCanHan30) + ' lô / ' + (canhBao.soThuocHetHang + canhBao.soThuocTonThap) + ' thuốc'}"></div>
+                <small class="text-muted"><a th:href="@{/canhbao}" class="text-decoration-none">Xử lý cảnh báo →</a></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ Chart.js -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-7">
+            <div class="card card-clean h-100">
+                <div class="card-header bg-white py-2">
+                    <span class="fw-bold">Xu hướng doanh số & tăng trưởng theo tháng (<code>sp_ThongKeXuHuong</code>)</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartNtXuHuong" height="125"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card card-clean h-100">
+                <div class="card-header bg-white py-2">
+                    <span class="fw-bold">Top thuốc bán chạy tại nhà thuốc (<code>sp_ThongKeTopThuoc</code>)</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="chartNtTopThuoc" height="175"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng hiệu suất nhà thuốc -->
+    <div class="card card-clean">
+        <div class="card-header bg-white py-2">
+            <span class="fw-bold">Chỉ số hiệu suất hoạt động (<code>sp_ThongKeHieuSuatNhaThuoc</code>)</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Nhà thuốc</th>
+                        <th>Khu vực</th>
+                        <th class="text-end">Doanh thu kỳ</th>
+                        <th class="text-end">Số giao dịch</th>
+                        <th class="text-end">Giá trị giỏ TB</th>
+                        <th class="text-end">Tỷ lệ bán theo đơn (%)</th>
+                        <th class="text-end">Biên LN gộp (%)</th>
+                        <th class="text-end">Vòng quay tồn</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="hs : ${hieuSuat}">
+                        <td class="fw-semibold text-primary" th:text="${hs.nhaThuoc}"></td>
+                        <td class="small" th:text="${hs.khuVuc}"></td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(hs.doanhThu, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                        <td class="text-end" th:text="${hs.soGiaoDich}"></td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(hs.giaTriGioTb, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                        <td class="text-end" th:text="${hs.tyLeBanTheoDonPct + '%'}"></td>
+                        <td class="text-end text-success fw-semibold" th:text="${hs.bienLoiNhuanGopPct + '%'}"></td>
+                        <td class="text-end fw-semibold" th:text="${hs.vongQuayTon}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/thongke/dashboard-nha-thuoc.js}"></script>
+</th:block>
+</body>
+</html>

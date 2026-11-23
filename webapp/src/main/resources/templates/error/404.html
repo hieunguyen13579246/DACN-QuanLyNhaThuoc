@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('404 - Không tìm thấy trang', ~{::section}, null)}">
+<body>
+<section>
+    <div class="card p-4 mx-auto" style="max-width: 600px;">
+        <h5 class="text-danger fw-bold mb-2">404 – Không tìm thấy đường dẫn hoặc dữ liệu</h5>
+        <p class="mb-2" th:text="${thongBaoLoi ?: 'Đường dẫn hoặc bản ghi bạn yêu cầu không tồn tại.'}"></p>
+        <div class="alert alert-secondary py-2 small mb-3">
+            <strong>Cách khắc phục:</strong> Kiểm tra lại đường dẫn trên thanh địa chỉ hoặc chọn chức năng từ thanh menu bên trái.
+        </div>
+        <div>
+            <a th:href="@{/}" class="btn btn-primary btn-sm">Về Trang chủ</a>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Tra cứu thuốc bằng mã vạch', ~{::section}, ~{::script})}">
+<body>
+<section>
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card p-3">
+                <h6 class="fw-bold mb-2">Quét hoặc nhập mã vạch thuốc (EAN-13 / Code128 / GS1)</h6>
+                <div class="input-group mb-2">
+                    <input type="text" id="inputMaVachTraCuu" class="form-control pos-scan-input"
+                           th:value="${maBanDau}"
+                           placeholder="Quét mã vạch hoặc nhập 13 số rồi nhấn Enter...">
+                    <button type="button" id="btnTraCuuMaVach" class="btn btn-primary fw-semibold">Tra cứu</button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <button type="button" id="btnToggleCameraTraCuu" class="btn btn-sm btn-outline-primary">
+                        Bật Camera quét mã
+                    </button>
+                    <span id="scanSourceBadge" class="badge bg-secondary">Sẵn sàng quét USB / Gõ tay</span>
+                </div>
+                <div id="cameraReaderTraCuu" class="d-none border rounded p-2 mb-2"></div>
+
+                <div class="small text-muted border-top pt-2 mt-1">
+                    <div class="fw-semibold mb-1">Mã vạch mẫu trong CSDL để thử nhanh:</div>
+                    <div class="d-flex flex-wrap gap-1">
+                        <button type="button" class="btn btn-xs btn-outline-secondary btn-sm js-sample-barcode"
+                                data-code="8930000000118">8930000000118 (Paracetamol 500mg)</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary btn-sm js-sample-barcode"
+                                data-code="8930000000019">8930000000019 (Amoxicillin 500mg)</button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary btn-sm js-sample-barcode"
+                                data-code="8930000000010">8930000000010 (Sai checkdigit - TC09)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card p-3" id="ketQuaTraCuuBox">
+                <div class="text-muted py-4 text-center" id="traCuuEmptyState">
+                    Quét hoặc nhập mã vạch bên trái để xem thông tin thuốc và tồn kho theo lô (FEFO).
+                </div>
+                <div id="traCuuContent" class="d-none">
+                    <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
+                        <div>
+                            <h5 class="fw-bold text-primary mb-1" id="tcTenThuoc"></h5>
+                            <div class="small text-muted">
+                                Mã thuốc: <strong id="tcMaThuoc"></strong> |
+                                Mã vạch: <code id="tcMaVach"></code> |
+                                Nhóm: <span id="tcNhomThuoc"></span>
+                            </div>
+                        </div>
+                        <span id="tcBadgeKeDon" class="badge"></span>
+                    </div>
+
+                    <div class="row g-2 mb-3 small">
+                        <div class="col-sm-6"><strong>Hoạt chất:</strong> <span id="tcHoatChat"></span></div>
+                        <div class="col-sm-6"><strong>Hàm lượng:</strong> <span id="tcHamLuong"></span></div>
+                        <div class="col-sm-6"><strong>Dạng bào chế:</strong> <span id="tcDangBaoChe"></span></div>
+                        <div class="col-sm-6"><strong>Đơn vị tính:</strong> <span id="tcDonViTinh"></span></div>
+                        <div class="col-sm-6"><strong>Giá bán lẻ:</strong> <span id="tcGiaBanLe" class="fw-bold text-primary"></span></div>
+                        <div class="col-sm-6"><strong>Tổng tồn khả dụng:</strong> <span id="tcTongTon" class="fw-bold"></span></div>
+                    </div>
+
+                    <h6 class="fw-bold mb-2">Danh sách lô tồn tại nhà thuốc hiện tại (sắp xếp theo FEFO)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Ưu tiên FEFO</th>
+                                <th>Số lô</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-end">Tồn kho</th>
+                                <th>Mức cảnh báo</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tcDanhSachLoBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script th:src="@{/js/thuoc/tra-cuu.js}"></script>
+</body>
+</html>

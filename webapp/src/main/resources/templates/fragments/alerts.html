@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="alerts">
+    <div id="globalAlertBox">
+        <div th:if="${thongBaoThanhCong != null}" class="alert alert-success alert-dismissible py-2 px-3 mb-3" role="alert">
+            <span class="fw-semibold" th:text="${thongBaoThanhCong}"></span>
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+        <div th:if="${thongBaoLoi != null}" class="alert alert-danger alert-dismissible py-2 px-3 mb-3" role="alert">
+            <div class="fw-semibold" th:text="${thongBaoLoi}"></div>
+            <div class="small mt-1" th:if="${huongDanSua != null}">
+                <strong>Cách khắc phục:</strong> <span th:text="${huongDanSua}"></span>
+            </div>
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

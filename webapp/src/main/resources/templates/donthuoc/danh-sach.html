@@ -1,0 +1,231 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/main :: layout('Quản lý đơn thuốc', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-file-earmark-medical me-2 text-primary"></i>Tiếp nhận & Theo dõi đơn thuốc</h5>
+            <small class="text-muted">Hệ thống tự động gọi <code>sp_CapNhatDonHetHieuLuc</code> trước khi liệt kê đơn thuốc</small>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="btnMoModalTaoDon"
+                sec:authorize="hasAnyRole('DUOCSI','QUANLY')">
+            <i class="bi bi-plus-lg me-1"></i> Tiếp nhận đơn thuốc mới
+        </button>
+    </div>
+
+    <!-- Bộ lọc tìm kiếm -->
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/donthuoc}" class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="tuKhoa" class="form-control"
+                               placeholder="Tìm theo mã đơn, khách hàng, bác sĩ kê..."
+                               th:value="${tuKhoa}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="trangThai" class="form-select form-select-sm">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="CHUA_BAN" th:selected="${trangThaiLoc == 'CHUA_BAN'}">Chưa bán</option>
+                        <option value="BAN_MOT_PHAN" th:selected="${trangThaiLoc == 'BAN_MOT_PHAN'}">Bán một phần</option>
+                        <option value="DA_BAN_HET" th:selected="${trangThaiLoc == 'DA_BAN_HET'}">Đã bán hết</option>
+                        <option value="HET_HIEU_LUC" th:selected="${trangThaiLoc == 'HET_HIEU_LUC'}">Hết hiệu lực</option>
+                        <option value="DA_HUY" th:selected="${trangThaiLoc == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+                    <a th:href="@{/donthuoc}" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách đơn thuốc -->
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Bác sĩ / Cơ sở khám</th>
+                        <th>Chẩn đoán</th>
+                        <th>Ngày kê / Hạn</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(danhSachDon)}">
+                        <td colspan="7" class="text-center text-muted py-4">Không có đơn thuốc nào phù hợp.</td>
+                    </tr>
+                    <tr th:each="dt : ${danhSachDon}">
+                        <td class="fw-semibold font-monospace text-primary" th:text="${dt.maDon}">DT-001</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${dt.tenKhachHang}">Nguyễn Văn A</div>
+                            <small class="text-muted font-monospace" th:text="${dt.soDienThoaiKhach}"></small>
+                        </td>
+                        <td>
+                            <div th:text="${dt.tenBacSi}">BS. Trần B</div>
+                            <small class="text-muted" th:text="${dt.coSoKham}">BV Bạch Mai</small>
+                        </td>
+                        <td th:text="${dt.chanDoan}">Viêm họng cấp</td>
+                        <td>
+                            <div class="small" th:text="${dt.ngayKeDon}"></div>
+                            <small class="text-muted" th:text="${'Hạn: ' + dt.ngayHetHieuLuc}"></small>
+                        </td>
+                        <td class="text-center">
+                            <span th:replace="~{fragments/badges :: trangThaiDon(${dt.trangThai})}"></span>
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-xem-don"
+                                    th:data-id="${dt.id}">
+                                <i class="bi bi-eye"></i> Chi tiết
+                            </button>
+                            <a th:if="${dt.trangThai == 'CHUA_BAN' or dt.trangThai == 'BAN_MOT_PHAN'}"
+                               th:href="@{/banhang/pos(donThuocId=${dt.id})}"
+                               sec:authorize="hasAnyRole('DUOCSI','QUANLY')"
+                               class="btn btn-sm btn-success ms-1" title="Bán theo đơn này">
+                                <i class="bi bi-cart-plus"></i> Bán thuốc
+                            </a>
+                            <button type="button"
+                                    th:if="${dt.coTheHuy}"
+                                    sec:authorize="hasAnyRole('DUOCSI','QUANLY')"
+                                    class="btn btn-sm btn-outline-danger ms-1 btn-huy-don"
+                                    th:data-id="${dt.id}"
+                                    th:data-ma="${dt.maDon}">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi tiết đơn thuốc -->
+    <div class="modal fade" id="modalChiTietDon" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Chi tiết đơn thuốc: <span id="ctMaDon" class="text-primary font-monospace"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3 small bg-light p-2 rounded border">
+                        <div class="col-md-6"><strong>Bác sĩ kê:</strong> <span id="ctBacSi"></span></div>
+                        <div class="col-md-6"><strong>Cơ sở khám:</strong> <span id="ctCoSo"></span></div>
+                        <div class="col-md-6"><strong>Khách hàng:</strong> <span id="ctKhachHang"></span></div>
+                        <div class="col-md-6"><strong>Ngày kê / Hạn:</strong> <span id="ctNgayKe"></span></div>
+                        <div class="col-12"><strong>Chẩn đoán:</strong> <span id="ctChanDoan"></span></div>
+                    </div>
+                    <h6 class="fw-bold small text-uppercase text-muted mb-2">Danh mục thuốc kê trong đơn</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc</th>
+                                <th>ĐVT</th>
+                                <th class="text-end">SL kê</th>
+                                <th class="text-end">Đã bán</th>
+                                <th class="text-end">Còn lại</th>
+                                <th>Liều dùng</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyChiTietDon"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Tiếp nhận đơn thuốc mới -->
+    <div class="modal fade" id="modalTaoDon" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="formTaoDon" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Tiếp nhận đơn thuốc mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">SĐT khách hàng <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="donSdtKhach" class="form-control" placeholder="09xxxxxxxx" required>
+                                <button type="button" class="btn btn-outline-primary" id="btnTimKhachDon">Tìm SĐT</button>
+                            </div>
+                            <input type="hidden" id="donKhachHangId">
+                            <small id="donTenKhachHienThi" class="text-success d-block mt-1"></small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Ngày kê đơn <span class="text-danger">*</span></label>
+                            <input type="date" id="donNgayKe" class="form-control form-control-sm" th:value="${ngayHomNay}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Số ngày hiệu lực</label>
+                            <input type="number" id="donSoNgayHieuLuc" class="form-control form-control-sm"
+                                   min="1" max="30" th:value="${soNgayHieuLucMacDinh}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Cơ sở khám bệnh <span class="text-danger">*</span></label>
+                            <input type="text" id="donCoSoKham" class="form-control form-control-sm" required placeholder="VD: Bệnh viện Đại học Y Dược">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Bác sĩ kê đơn <span class="text-danger">*</span></label>
+                            <input type="text" id="donBacSi" class="form-control form-control-sm" required placeholder="VD: BS.CKII Nguyễn Văn A">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Chẩn đoán <span class="text-danger">*</span></label>
+                            <input type="text" id="donChanDoan" class="form-control form-control-sm" required placeholder="VD: Nhiễm khuẩn hô hấp trên cấp">
+                        </div>
+                    </div>
+
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label small fw-bold mb-0">Thuốc kê trong đơn <span class="text-danger">*</span></label>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnThemDongDon">
+                            <i class="bi bi-plus-circle me-1"></i> Thêm dòng thuốc
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width: 45%">Thuốc</th>
+                                <th style="width: 15%">Số lượng kê</th>
+                                <th style="width: 32%">Liều dùng / Hướng dẫn</th>
+                                <th style="width: 8%"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyDongDonMoi"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Lưu đơn thuốc</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/donthuoc/don-thuoc.js}"></script>
+</th:block>
+</body>
+</html>

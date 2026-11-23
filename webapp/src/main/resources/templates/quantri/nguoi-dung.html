@@ -1,0 +1,127 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Quản lý người dùng & phân quyền', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Quản lý người dùng & Phân quyền RBAC</h5>
+            <small class="text-muted">4 vai trò: Dược sĩ (DUOCSI), Thủ kho (THUKHO), Quản lý nhà thuốc (QUANLY), Quản trị chuỗi (QUANTRI)</small>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" id="btnMoThemNguoiDung">
+            <i class="bi bi-person-plus me-1"></i>Thêm người dùng mới
+        </button>
+    </div>
+
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ và tên</th>
+                        <th>Email đăng nhập</th>
+                        <th>Vai trò</th>
+                        <th>Nhà thuốc phân công</th>
+                        <th>Số CCHN Dược</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="u : ${danhSachNguoiDung}">
+                        <td class="font-monospace small" th:text="${u.id}"></td>
+                        <td class="fw-semibold" th:text="${u.hoTen}"></td>
+                        <td class="font-monospace text-primary" th:text="${u.email}"></td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"
+                                  th:text="${u.vaiTro + ' - ' + u.tenVaiTro}"></span>
+                        </td>
+                        <td class="small" th:text="${u.nhaThuocId != null ? ('Nhà thuốc #' + u.nhaThuocId) : 'Toàn chuỗi (QUANTRI)'}"></td>
+                        <td class="font-monospace small" th:text="${u.soChungChiHanhNghe != null ? u.soChungChiHanhNghe : '-'}"></td>
+                        <td class="text-center">
+                            <span th:if="${u.kichHoat}" class="badge bg-success">Đang hoạt động</span>
+                            <span th:if="${!u.kichHoat}" class="badge bg-secondary">Đã khóa</span>
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-sua-nd"
+                                    th:data-id="${u.id}"
+                                    th:data-hoten="${u.hoTen}"
+                                    th:data-email="${u.email}"
+                                    th:data-vaitro="${u.vaiTro}"
+                                    th:data-ntid="${u.nhaThuocId}"
+                                    th:data-cchn="${u.soChungChiHanhNghe}"
+                                    th:data-kichhoat="${u.kichHoat}">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm / Sửa Người dùng -->
+    <div class="modal fade" id="modalNguoiDung" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="formNguoiDung" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold" id="modalNdTitle">Thêm người dùng mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="ndId">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Họ và tên <span class="text-danger">*</span></label>
+                        <input type="text" id="ndHoTen" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Email đăng nhập <span class="text-danger">*</span></label>
+                        <input type="email" id="ndEmail" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Mật khẩu (Để trống nếu giữ nguyên khi sửa)</label>
+                        <input type="password" id="ndMatKhau" class="form-control form-control-sm" placeholder="Mặc định 123456 nếu tạo mới">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Vai trò <span class="text-danger">*</span></label>
+                            <select id="ndVaiTro" class="form-select form-select-sm" required>
+                                <option value="DUOCSI">DUOCSI - Dược sĩ bán hàng</option>
+                                <option value="THUKHO">THUKHO - Thủ kho</option>
+                                <option value="QUANLY">QUANLY - Quản lý nhà thuốc</option>
+                                <option value="QUANTRI">QUANTRI - Quản trị chuỗi</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Nhà thuốc làm việc</label>
+                            <select id="ndNhaThuocId" class="form-select form-select-sm">
+                                <option value="">-- Không gán (QUANTRI) --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Số Chứng chỉ hành nghề Dược</label>
+                        <input type="text" id="ndCchn" class="form-control form-control-sm" placeholder="VD: CCHN-HCM-00991">
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="checkbox" id="ndKichHoat" class="form-check-input" checked>
+                        <label class="form-check-label small fw-semibold" for="ndKichHoat">Kích hoạt tài khoản</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Lưu người dùng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/thongke/nguoi-dung.js}"></script>
+</th:block>
+</body>
+</html>

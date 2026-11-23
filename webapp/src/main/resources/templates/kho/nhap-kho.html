@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Nhập kho thuốc', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-box-arrow-in-down me-2 text-primary"></i>Nhập kho dược phẩm theo lô (Lập phiếu chờ duyệt)</h5>
+            <small class="text-muted">Phiếu nhập kho sau khi lập sẽ ở trạng thái <strong>Chờ duyệt</strong>; Quản lý hoặc Quản trị phải duyệt phiếu tại mục <strong>Duyệt phiếu kho</strong> thì thuốc mới được cộng vào tồn kho</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:if="${(laQuanLy ?: false) or (laQuanTri ?: false)}" th:href="@{/kho/duyet-phieu}" class="btn btn-sm btn-success">
+                <i class="bi bi-clipboard2-check-fill me-1"></i>Đi tới Duyệt phiếu kho
+            </a>
+            <a th:href="@{/kho/ton-kho}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-boxes me-1"></i>Xem tồn kho
+            </a>
+        </div>
+    </div>
+
+    <!-- Form lập phiếu nhập kho -->
+    <div class="card card-clean mb-4"
+         id="nhapKhoRoot"
+         th:data-prefill-thuoc-id="${prefillThuocId}"
+         th:data-prefill-so-luong="${prefillSoLuong}">
+        <div class="card-header bg-white py-2">
+            <span class="fw-bold"><i class="bi bi-plus-square me-1 text-primary"></i>Lập phiếu nhập kho mới (gọi <code>sp_NhapKho</code> → Trạng thái <code>CHO_DUYET</code>)</span>
+        </div>
+        <div class="card-body">
+            <!-- Thanh quét mã vạch & GS1 -->
+            <div class="row g-2 align-items-end mb-3 bg-light p-2 rounded border">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-primary mb-1">
+                        <i class="bi bi-upc-scan me-1"></i>Quét mã vạch EAN-13 hoặc chuỗi GS1-128
+                    </label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="nkBarcodeInput" data-barcode-input="true"
+                               class="form-control barcode-scan-box"
+                               placeholder="Quét mã vạch hoặc chuỗi GS1 rồi nhấn Enter...">
+                        <button type="button" class="btn btn-primary" id="btnNkParseBarcode">Quét / Tách GS1</button>
+                        <button type="button" class="btn btn-outline-primary" id="btnToggleCameraNk">
+                            <i class="bi bi-camera-video me-1"></i>Bật Camera quét mã
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-2" th:if="${danhSachNhaThuoc != null}">
+                    <label class="form-label small fw-semibold mb-1">Nhà thuốc nhập <span class="text-danger">*</span></label>
+                    <select id="nkNhaThuocId" class="form-select form-select-sm">
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold mb-1">Nhà cung cấp <span class="text-danger">*</span></label>
+                    <select id="nkNhaCungCapId" class="form-select form-select-sm" required>
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        <option th:each="ncc : ${danhSachNcc}"
+                                th:value="${ncc.id}"
+                                th:text="${ncc.ma + ' - ' + ncc.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold mb-1">Ghi chú phiếu nhập</label>
+                    <input type="text" id="nkGhiChu" class="form-control form-control-sm" placeholder="VD: HĐ VAT #00124">
+                </div>
+            </div>
+
+            <div id="nkCameraReader" style="max-width: 380px;" class="mx-auto border rounded p-2 mb-2 d-none"></div>
+            <div id="nkGs1InfoAlert" class="alert alert-info py-2 small d-none mb-2"></div>
+
+            <!-- Danh mục thuốc ẩn để JS tạo dòng -->
+            <select id="nkTemplateThuocOptions" class="d-none">
+                <option value="">-- Chọn thuốc --</option>
+                <option th:each="t : ${danhSachThuoc}"
+                        th:value="${t.id}"
+                        th:text="${t.ma + ' - ' + t.ten + ' (' + t.donViTinh + ')'}"></option>
+            </select>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small fw-bold text-uppercase text-muted">Danh sách các lô thuốc nhập kho</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnNkThemDong">
+                    <i class="bi bi-plus-circle me-1"></i>Thêm dòng lô nhập
+                </button>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="width: 28%">Thuốc <span class="text-danger">*</span></th>
+                        <th style="width: 16%">Số lô <span class="text-danger">*</span></th>
+                        <th style="width: 14%">Ngày SX <span class="text-danger">*</span></th>
+                        <th style="width: 14%">Hạn dùng <span class="text-danger">*</span></th>
+                        <th style="width: 10%">Số lượng <span class="text-danger">*</span></th>
+                        <th style="width: 13%">Giá nhập (VND) <span class="text-danger">*</span></th>
+                        <th style="width: 5%"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="tbodyNkLines"></tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-muted">
+                    <i class="bi bi-info-circle text-primary me-1"></i>Sau khi gửi, phiếu sẽ ở trạng thái <strong>Chờ duyệt</strong>. Quản lý hoặc Quản trị cần vào mục <strong>Duyệt phiếu kho</strong> để duyệt thì thuốc mới được nhập vào tồn kho.
+                </span>
+                <button type="button" id="btnLuuPhieuNhap" class="btn btn-primary fw-bold">
+                    <i class="bi bi-send-check me-1"></i>Gửi phiếu nhập chờ duyệt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lịch sử phiếu nhập kho gần đây -->
+    <div class="card card-clean">
+        <div class="card-header bg-white py-2">
+            <span class="fw-bold"><i class="bi bi-clock-history me-1 text-primary"></i>Lịch sử phiếu nhập kho gần đây</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Thời gian lập</th>
+                        <th>Nhà thuốc</th>
+                        <th>Nhà cung cấp</th>
+                        <th>Người lập</th>
+                        <th class="text-end">Tổng giá trị nhập</th>
+                        <th class="text-center">Trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(danhSachPhieuNhap)}">
+                        <td colspan="7" class="text-center text-muted py-3">Chưa có phiếu nhập kho nào.</td>
+                    </tr>
+                    <tr th:each="p : ${danhSachPhieuNhap}">
+                        <td class="font-monospace fw-semibold text-primary" th:text="${p.maPhieu}"></td>
+                        <td class="small" th:text="${p.thoiGianLap}"></td>
+                        <td class="small" th:text="${p.tenNhaThuoc}"></td>
+                        <td class="small" th:text="${p.tenNhaCungCap}"></td>
+                        <td class="small" th:text="${p.tenNguoiLap}"></td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(p.tongGiaTri, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                        <td class="text-center">
+                            <span th:replace="~{fragments/badges :: trangThaiPhieu(${p.trangThai})}"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/kho/nhap-kho.js}"></script>
+</th:block>
+</body>
+</html>

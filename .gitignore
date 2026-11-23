@@ -1,0 +1,28 @@
+# Maven / Java build outputs
+target/
+webapp/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+hs_err_pid*
+replay_pid*
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE / Editor / Tooling scratch
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.github/modernize/
+
+# Environment & OS files
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db

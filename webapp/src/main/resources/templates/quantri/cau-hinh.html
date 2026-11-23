@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Cấu hình tham số hệ thống', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-gear me-2 text-primary"></i>Cấu hình tham số vận hành hệ thống</h5>
+            <small class="text-muted">Các ngưỡng cảnh báo hạn dùng (30/60/90 ngày), số ngày hiệu lực đơn thuốc, ngưỡng tồn chậm luân chuyển — tự động ghi vào <code>AuditLog</code> khi thay đổi</small>
+        </div>
+    </div>
+
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width: 28%">Khóa cấu hình (Key)</th>
+                        <th style="width: 18%">Giá trị hiện tại</th>
+                        <th style="width: 42%">Mô tả ý nghĩa nghiệp vụ</th>
+                        <th style="width: 12%" class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="ch : ${danhSachCauHinh}">
+                        <td class="font-monospace fw-bold text-primary" th:text="${ch.khoa}"></td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm font-monospace fw-bold inp-ch-giatri"
+                                   th:value="${ch.giaTri}" th:data-khoa="${ch.khoa}">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm inp-ch-mota"
+                                   th:value="${ch.moTa}" th:data-khoa="${ch.khoa}">
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-primary btn-luu-ch" th:data-khoa="${ch.khoa}">
+                                <i class="bi bi-check2 me-1"></i>Lưu
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/thongke/cau-hinh.js}"></script>
+</th:block>
+</body>
+</html>

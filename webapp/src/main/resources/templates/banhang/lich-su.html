@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/main :: layout('Lịch sử giao dịch', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-primary"></i>Lịch sử giao dịch bán hàng</h5>
+            <small class="text-muted">Tra cứu hóa đơn, xem các lô thuốc đã xuất theo FEFO và in lại hóa đơn</small>
+        </div>
+        <a th:href="@{/banhang/pos}" sec:authorize="hasAnyRole('DUOCSI','QUANLY')" class="btn btn-sm btn-primary">
+            <i class="bi bi-cart-check me-1"></i> Mở màn hình POS
+        </a>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/banhang/lich-su}" class="row g-2 align-items-end">
+                <div class="col-md-3" th:if="${danhSachNhaThuoc != null}">
+                    <label class="form-label small mb-1">Nhà thuốc</label>
+                    <select name="nhaThuocId" class="form-select form-select-sm">
+                        <option value="">-- Toàn chuỗi --</option>
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:selected="${nhaThuocId == nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Từ ngày</label>
+                    <input type="date" name="tuNgay" class="form-control form-control-sm" th:value="${tuNgay}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Đến ngày</label>
+                    <input type="date" name="denNgay" class="form-control form-control-sm" th:value="${denNgay}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Trạng thái</label>
+                    <select name="trangThai" class="form-select form-select-sm">
+                        <option value="">-- Tất cả --</option>
+                        <option value="HOAN_THANH" th:selected="${trangThai == 'HOAN_THANH'}">Hoàn thành</option>
+                        <option value="DA_HUY" th:selected="${trangThai == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Từ khóa (Mã GD / Khách / Mã đơn)</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="tuKhoa" class="form-control" placeholder="GD-..." th:value="${tuKhoa}">
+                        <button type="submit" class="btn btn-primary">Lọc</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bảng giao dịch -->
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Mã giao dịch</th>
+                        <th>Thời gian (VN)</th>
+                        <th>Nhà thuốc</th>
+                        <th>Dược sĩ bán</th>
+                        <th>Khách hàng</th>
+                        <th>Đơn thuốc</th>
+                        <th class="text-end">Thanh toán</th>
+                        <th class="text-center">PTTT</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(danhSach)}">
+                        <td colspan="10" class="text-center text-muted py-4">Không tìm thấy giao dịch nào.</td>
+                    </tr>
+                    <tr th:each="gd : ${danhSach}">
+                        <td class="fw-semibold font-monospace text-primary" th:text="${gd.maGiaoDich}">GD-001</td>
+                        <td class="small" th:text="${gd.thoiGian}">01/03/2026 09:30</td>
+                        <td class="small" th:text="${gd.tenNhaThuoc}">NT Quận 1</td>
+                        <td class="small" th:text="${gd.tenNguoiBan}">Dược sĩ A</td>
+                        <td>
+                            <div class="small fw-semibold" th:text="${gd.tenKhachHang != null ? gd.tenKhachHang : 'Khách lẻ'}"></div>
+                            <small class="text-muted font-monospace" th:text="${gd.sdtKhachHang}"></small>
+                        </td>
+                        <td>
+                            <span th:if="${gd.maDonThuoc != null}" class="badge bg-info text-dark font-monospace" th:text="${gd.maDonThuoc}"></span>
+                            <span th:if="${gd.maDonThuoc == null}" class="text-muted small">-</span>
+                        </td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(gd.thanhToan, 0, 'POINT', 0, 'COMMA') + ' ₫'}">100.000 ₫</td>
+                        <td class="text-center small" th:text="${gd.phuongThucThanhToan}">TIEN_MAT</td>
+                        <td class="text-center">
+                            <span th:replace="~{fragments/badges :: trangThaiGiaoDich(${gd.trangThai})}"></span>
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-xem-gd" th:data-id="${gd.id}">
+                                <i class="bi bi-eye"></i> Chi tiết
+                            </button>
+                            <a th:href="@{/banhang/hoa-don/{id}(id=${gd.id})}" target="_blank"
+                               class="btn btn-sm btn-outline-secondary ms-1" title="In hóa đơn">
+                                <i class="bi bi-printer"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chi tiết giao dịch -->
+    <div class="modal fade" id="modalChiTietGD" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Chi tiết giao dịch: <span id="mdMaGD" class="text-primary font-monospace"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3 small bg-light p-2 rounded border">
+                        <div class="col-md-6"><strong>Nhà thuốc:</strong> <span id="mdNhaThuoc"></span></div>
+                        <div class="col-md-6"><strong>Thời gian:</strong> <span id="mdThoiGian"></span></div>
+                        <div class="col-md-6"><strong>Người bán:</strong> <span id="mdNguoiBan"></span></div>
+                        <div class="col-md-6"><strong>Khách hàng:</strong> <span id="mdKhachHang"></span></div>
+                        <div class="col-md-6"><strong>Đơn thuốc:</strong> <span id="mdDonThuoc"></span></div>
+                        <div class="col-md-6"><strong>Trạng thái:</strong> <span id="mdTrangThai"></span></div>
+                        <div class="col-12 text-danger d-none" id="mdThongTinHuy"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-2">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc</th>
+                                <th>Số lô xuất</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-end">SL</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyChiTietGD"></tbody>
+                        </table>
+                    </div>
+                    <div class="text-end small">
+                        <div>Tổng tiền hàng: <strong id="mdTongTienHang"></strong></div>
+                        <div>Giảm giá: <strong id="mdGiamGia"></strong></div>
+                        <div class="fs-6 text-primary">Thanh toán: <strong id="mdThanhToan"></strong></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" target="_blank" id="btnInHoaDonModal" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-printer me-1"></i>In hóa đơn
+                    </a>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/banhang/lich-su.js}"></script>
+</th:block>
+</body>
+</html>

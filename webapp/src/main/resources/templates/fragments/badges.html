@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<span th:fragment="mucCanhBao(muc, soNgay)" th:switch="${muc}">
+    <span th:case="'DA_HET_HAN'" class="badge badge-het-han"
+          th:text="'Đã hết hạn (' + ${soNgay} + ' ngày)'">Đã hết hạn</span>
+    <span th:case="'MUC_30'" class="badge badge-muc-30"
+          th:text="'Cận hạn ≤30 ngày (' + ${soNgay} + ' ngày)'">≤30 ngày</span>
+    <span th:case="'CAN_HAN_30'" class="badge badge-muc-30"
+          th:text="'Cận hạn ≤30 ngày (' + ${soNgay} + ' ngày)'">≤30 ngày</span>
+    <span th:case="'MUC_60'" class="badge badge-muc-60"
+          th:text="'Cận hạn ≤60 ngày (' + ${soNgay} + ' ngày)'">≤60 ngày</span>
+    <span th:case="'CAN_HAN_60'" class="badge badge-muc-60"
+          th:text="'Cận hạn ≤60 ngày (' + ${soNgay} + ' ngày)'">≤60 ngày</span>
+    <span th:case="'MUC_90'" class="badge badge-muc-90"
+          th:text="'Cận hạn ≤90 ngày (' + ${soNgay} + ' ngày)'">≤90 ngày</span>
+    <span th:case="'CAN_HAN_90'" class="badge badge-muc-90"
+          th:text="'Cận hạn ≤90 ngày (' + ${soNgay} + ' ngày)'">≤90 ngày</span>
+    <span th:case="*" class="badge bg-success"
+          th:text="${soNgay != null ? 'Còn hạn (' + soNgay + ' ngày)' : 'Còn hạn'}">Còn hạn</span>
+</span>
+
+<span th:fragment="mucCanhBaoHanDung(muc)" th:switch="${muc}">
+    <span th:case="'DA_HET_HAN'" class="badge badge-het-han">Đã hết hạn</span>
+    <span th:case="'CAN_HAN_30'" class="badge badge-muc-30">Cận hạn ≤30 ngày</span>
+    <span th:case="'MUC_30'" class="badge badge-muc-30">Cận hạn ≤30 ngày</span>
+    <span th:case="'CAN_HAN_60'" class="badge badge-muc-60">Cận hạn ≤60 ngày</span>
+    <span th:case="'MUC_60'" class="badge badge-muc-60">Cận hạn ≤60 ngày</span>
+    <span th:case="'CAN_HAN_90'" class="badge badge-muc-90">Cận hạn ≤90 ngày</span>
+    <span th:case="'MUC_90'" class="badge badge-muc-90">Cận hạn ≤90 ngày</span>
+    <span th:case="*" class="badge bg-success">Còn hạn</span>
+</span>
+
+<span th:fragment="mucCanhBaoTonThap(muc)" th:switch="${muc}">
+    <span th:case="'HET_HANG'" class="badge bg-danger">Hết hàng (0)</span>
+    <span th:case="'TON_THAP'" class="badge bg-warning text-dark">Tồn dưới định mức</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${muc}"></span>
+</span>
+
+<span th:fragment="loaiPhieu(lp)" th:switch="${lp}">
+    <span th:case="'NHAP'" class="badge bg-success-subtle text-success border border-success-subtle">Nhập kho</span>
+    <span th:case="'NHAP_KHO'" class="badge bg-success-subtle text-success border border-success-subtle">Nhập kho</span>
+    <span th:case="'DIEU_CHUYEN'" class="badge bg-primary-subtle text-primary border border-primary-subtle">Điều chuyển</span>
+    <span th:case="'XUAT_HUY'" class="badge bg-danger-subtle text-danger border border-danger-subtle">Xuất hủy</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${lp}"></span>
+</span>
+
+<span th:fragment="trangThaiPhieu(tt)" th:switch="${tt}">
+    <span th:case="'CHO_DUYET'" class="badge bg-warning text-dark">Chờ duyệt</span>
+    <span th:case="'HOAN_THANH'" class="badge bg-success">Đã duyệt</span>
+    <span th:case="'DA_DUYET'" class="badge bg-success">Đã duyệt</span>
+    <span th:case="'TU_CHOI'" class="badge bg-danger">Từ chối</span>
+    <span th:case="'DA_HUY'" class="badge bg-secondary">Đã hủy</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${tt}"></span>
+</span>
+
+<span th:fragment="trangThaiDon(tt)" th:switch="${tt}">
+    <span th:case="'CHUA_BAN'" class="badge bg-info text-dark">Chưa bán</span>
+    <span th:case="'BAN_MOT_PHAN'" class="badge bg-primary">Bán một phần</span>
+    <span th:case="'DA_BAN_HET'" class="badge bg-success">Đã bán hết</span>
+    <span th:case="'HET_HIEU_LUC'" class="badge bg-danger">Hết hiệu lực</span>
+    <span th:case="'HUY'" class="badge bg-secondary">Đã hủy</span>
+    <span th:case="'DA_HUY'" class="badge bg-secondary">Đã hủy</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${tt}"></span>
+</span>
+
+<span th:fragment="trangThaiGiaoDich(tt)" th:switch="${tt}">
+    <span th:case="'HOAN_THANH'" class="badge bg-success">Hoàn thành</span>
+    <span th:case="'DA_HUY'" class="badge bg-danger">Đã hủy</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${tt}"></span>
+</span>
+</body>
+</html>

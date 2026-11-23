@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside th:fragment="sidebar" class="app-sidebar">
+    <a th:href="@{/}" class="sidebar-brand d-flex align-items-center">
+        <i class="bi bi-capsule-pill fs-5 me-2"></i>
+        <span>Hệ Thống Nhà Thuốc</span>
+    </a>
+
+    <div class="sidebar-section-title">Tổng quan &amp; Tra cứu</div>
+    <ul class="sidebar-nav">
+        <li>
+            <a th:href="@{/}" class="nav-link"
+               th:classappend="${currentPath == '/' or currentPath == '/home'} ? 'active' : ''">
+                <i class="bi bi-house-door-fill sidebar-icon"></i>
+                <span>Trang chủ</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/thuoc/tra-cuu-ma-vach}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/thuoc/tra-cuu')} ? 'active' : ''">
+                <i class="bi bi-upc-scan sidebar-icon"></i>
+                <span>Tra cứu mã vạch</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/canhbao}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/canhbao')} ? 'active' : ''">
+                <i class="bi bi-exclamation-triangle-fill sidebar-icon"></i>
+                <span>Cảnh báo hạn &amp; tồn</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-section-title" th:if="${(laDuocSi ?: false) or (laQuanLy ?: false) or (laQuanTri ?: false)}">Bán hàng &amp; Đơn thuốc</div>
+    <ul class="sidebar-nav" th:if="${(laDuocSi ?: false) or (laQuanLy ?: false) or (laQuanTri ?: false)}">
+        <li th:if="${(laDuocSi ?: false) or (laQuanLy ?: false)}">
+            <a th:href="@{/banhang/pos}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/banhang/pos')} ? 'active' : ''">
+                <i class="bi bi-cart-check-fill sidebar-icon"></i>
+                <span>Bán hàng tại quầy (POS)</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/donthuoc}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/donthuoc')} ? 'active' : ''">
+                <i class="bi bi-file-earmark-medical-fill sidebar-icon"></i>
+                <span>Đơn thuốc</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/khachhang}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/khachhang')} ? 'active' : ''">
+                <i class="bi bi-people-fill sidebar-icon"></i>
+                <span>Khách hàng</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/banhang/lich-su}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/banhang/lich-su')} ? 'active' : ''">
+                <i class="bi bi-clock-history sidebar-icon"></i>
+                <span>Lịch sử giao dịch</span>
+            </a>
+        </li>
+        <li th:if="${laQuanLy ?: false}">
+            <a th:href="@{/banhang/huy-giao-dich}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/banhang/huy')} ? 'active' : ''">
+                <i class="bi bi-x-octagon-fill sidebar-icon"></i>
+                <span>Hủy giao dịch</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-section-title">Quản lý Kho</div>
+    <ul class="sidebar-nav">
+        <li>
+            <a th:href="@{/kho/ton-kho}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/kho/ton-kho')} ? 'active' : ''">
+                <i class="bi bi-boxes sidebar-icon"></i>
+                <span>Tồn kho thuốc &amp; lô</span>
+            </a>
+        </li>
+        <li th:if="${(laThuKho ?: false) or (laQuanLy ?: false) or (laQuanTri ?: false)}">
+            <a th:href="@{/kho/nhap-kho}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/kho/nhap-kho')} ? 'active' : ''">
+                <i class="bi bi-box-arrow-in-down sidebar-icon"></i>
+                <span>Nhập kho thuốc</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/kho/phieu-kho}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/kho/phieu-kho')} ? 'active' : ''">
+                <i class="bi bi-arrow-left-right sidebar-icon"></i>
+                <span>Phiếu điều chuyển &amp; hủy</span>
+            </a>
+        </li>
+        <li th:if="${(laThuKho ?: false) or (laQuanLy ?: false) or (laQuanTri ?: false)}">
+            <a th:href="@{/kho/in-tem}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/kho/in-tem')} ? 'active' : ''">
+                <i class="bi bi-printer-fill sidebar-icon"></i>
+                <span>In tem mã vạch</span>
+            </a>
+        </li>
+        <li th:if="${(laQuanLy ?: false) or (laQuanTri ?: false)}">
+            <a th:href="@{/kho/duyet-phieu}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/kho/duyet-phieu')} ? 'active' : ''">
+                <i class="bi bi-clipboard2-check-fill sidebar-icon"></i>
+                <span>Duyệt phiếu kho</span>
+            </a>
+        </li>
+        <li th:if="${(laQuanLy ?: false) or (laQuanTri ?: false)}">
+            <a th:href="@{/kho/dinh-muc}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/kho/dinh-muc')} ? 'active' : ''">
+                <i class="bi bi-sliders sidebar-icon"></i>
+                <span>Định mức tồn kho</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-section-title">Thống kê &amp; Phân tích</div>
+    <ul class="sidebar-nav">
+        <li th:if="${(laThuKho ?: false) or (laQuanLy ?: false) or (laQuanTri ?: false)}">
+            <a th:href="@{/thongke/de-xuat-nhap}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/thongke/de-xuat-nhap')} ? 'active' : ''">
+                <i class="bi bi-bag-plus-fill sidebar-icon"></i>
+                <span>Đề xuất nhập hàng</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/thongke/dashboard-nha-thuoc}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/thongke/dashboard-nha-thuoc')} ? 'active' : ''">
+                <i class="bi bi-bar-chart-line-fill sidebar-icon"></i>
+                <span>Thống kê nhà thuốc</span>
+            </a>
+        </li>
+        <li th:if="${(laQuanLy ?: false) or (laQuanTri ?: false)}">
+            <a th:href="@{/thongke/dashboard-chuoi}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/thongke/dashboard-chuoi')} ? 'active' : ''">
+                <i class="bi bi-graph-up-arrow sidebar-icon"></i>
+                <span>Phân tích toàn chuỗi</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-section-title" th:if="${laQuanTri ?: false}">Quản trị Hệ thống</div>
+    <ul class="sidebar-nav" th:if="${laQuanTri ?: false}">
+        <li>
+            <a th:href="@{/thuoc/quan-ly}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/thuoc/quan-ly')} ? 'active' : ''">
+                <i class="bi bi-capsule sidebar-icon"></i>
+                <span>Danh mục thuốc &amp; mã vạch</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/quantri/danh-muc-chuoi}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/quantri/danh-muc-chuoi')} ? 'active' : ''">
+                <i class="bi bi-shop sidebar-icon"></i>
+                <span>NCC, Khu vực &amp; Nhà thuốc</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/quantri/nguoi-dung}" class="nav-link"
+               th:classappend="${currentPath != null and (currentPath.startsWith('/nguoidung') or currentPath.startsWith('/quantri/nguoi-dung'))} ? 'active' : ''">
+                <i class="bi bi-person-badge-fill sidebar-icon"></i>
+                <span>Quản lý người dùng</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/quantri/cau-hinh}" class="nav-link"
+               th:classappend="${currentPath != null and (currentPath.startsWith('/cauhinh') or currentPath.startsWith('/quantri/cau-hinh'))} ? 'active' : ''">
+                <i class="bi bi-gear-fill sidebar-icon"></i>
+                <span>Cấu hình hệ thống</span>
+            </a>
+        </li>
+        <li>
+            <a th:href="@{/quantri/nhat-ky-doi-soat}" class="nav-link"
+               th:classappend="${currentPath != null and currentPath.startsWith('/quantri/nhat-ky-doi-soat')} ? 'active' : ''">
+                <i class="bi bi-shield-check sidebar-icon"></i>
+                <span>Nhật ký &amp; Đối soát tồn</span>
+            </a>
+        </li>
+    </ul>
+</aside>
+</body>
+</html>

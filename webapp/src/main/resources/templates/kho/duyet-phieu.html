@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Duyệt phiếu kho', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-check2-square me-2 text-primary"></i>Duyệt phiếu kho (Nhập kho, Điều chuyển &amp; Xuất hủy)</h5>
+            <small class="text-muted">Quản lý nhà thuốc hoặc Quản trị chuỗi kiểm tra chi tiết và duyệt hoặc từ chối phiếu kho (<code>sp_DuyetPhieuKho</code>)</small>
+        </div>
+    </div>
+
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/kho/duyet-phieu}" class="row g-2 align-items-end">
+                <div class="col-md-4" th:if="${danhSachNhaThuoc != null}">
+                    <label class="form-label small mb-1">Nhà thuốc</label>
+                    <select name="nhaThuocId" class="form-select form-select-sm">
+                        <option value="">-- Toàn chuỗi --</option>
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:selected="${nhaThuocId == nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Trạng thái phiếu</label>
+                    <select name="trangThai" class="form-select form-select-sm">
+                        <option value="CHO_DUYET" th:selected="${trangThai == 'CHO_DUYET'}">Đang chờ duyệt (CHO_DUYET)</option>
+                        <option value="HOAN_THANH" th:selected="${trangThai == 'HOAN_THANH' or trangThai == 'DA_DUYET'}">Đã duyệt (HOAN_THANH)</option>
+                        <option value="TU_CHOI" th:selected="${trangThai == 'TU_CHOI'}">Đã từ chối (TU_CHOI)</option>
+                        <option value="" th:selected="${trangThai == ''}">-- Tất cả trạng thái --</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Lọc phiếu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Loại phiếu</th>
+                        <th>Nhà thuốc</th>
+                        <th>Nhà cung cấp / Đích / Lý do</th>
+                        <th>Người lập &amp; Thời gian</th>
+                        <th class="text-end">Tổng giá trị</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(danhSachPhieu)}">
+                        <td colspan="8" class="text-center text-muted py-4">Không có phiếu kho nào trong danh sách.</td>
+                    </tr>
+                    <tr th:each="p : ${danhSachPhieu}">
+                        <td class="font-monospace fw-bold text-primary" th:text="${p.maPhieu}"></td>
+                        <td><span th:replace="~{fragments/badges :: loaiPhieu(${p.loaiPhieu})}"></span></td>
+                        <td class="small fw-semibold" th:text="${p.tenNhaThuoc}"></td>
+                        <td class="small">
+                            <span th:if="${p.loaiPhieu == 'DIEU_CHUYEN'}" th:text="${'→ ' + p.tenNhaThuocDich}"></span>
+                            <span th:if="${p.loaiPhieu == 'XUAT_HUY'}" class="text-danger" th:text="${'Lý do: ' + p.lyDoHuy}"></span>
+                            <span th:if="${p.loaiPhieu == 'NHAP' or p.loaiPhieu == 'NHAP_KHO'}" class="text-success fw-semibold" th:text="${'NCC: ' + p.tenNhaCungCap}"></span>
+                        </td>
+                        <td class="small">
+                            <div th:text="${p.tenNguoiLap}"></div>
+                            <small class="text-muted" th:text="${p.thoiGianLap}"></small>
+                        </td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(p.tongGiaTri, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                        <td class="text-center"><span th:replace="~{fragments/badges :: trangThaiPhieu(${p.trangThai})}"></span></td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-xem-duyet" th:data-id="${p.id}">
+                                <i class="bi bi-eye"></i> Xem
+                            </button>
+                            <th:block th:if="${p.trangThai == 'CHO_DUYET'}">
+                                <button type="button" class="btn btn-sm btn-success ms-1 btn-duyet-ngay"
+                                        th:data-id="${p.id}" th:data-ma="${p.maPhieu}">
+                                    <i class="bi bi-check-lg"></i> Duyệt
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger ms-1 btn-mo-tuchoi"
+                                        th:data-id="${p.id}" th:data-ma="${p.maPhieu}">
+                                    <i class="bi bi-x-lg"></i> Từ chối
+                                </button>
+                            </th:block>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Từ chối phiếu (bắt buộc nhập lý do) -->
+    <div class="modal fade" id="modalTuChoiPhieu" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="formTuChoiPhieu" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold text-danger">Từ chối phiếu kho: <span id="tcMaPhieu" class="font-monospace"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="tcPhieuId">
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Lý do từ chối duyệt <span class="text-danger">*</span></label>
+                        <textarea id="tcLyDoInput" class="form-control form-control-sm" rows="3"
+                                  required maxlength="300"
+                                  placeholder="Nhập rõ lý do từ chối phiếu (bắt buộc theo BR)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-sm btn-danger">Xác nhận từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xem chi tiết phiếu -->
+    <div class="modal fade" id="modalXemPhieuDuyet" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Chi tiết phiếu kho: <span id="dpMaPhieu" class="font-monospace text-primary"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3 small bg-light p-2 rounded border">
+                        <div class="col-md-6"><strong>Loại phiếu:</strong> <span id="dpLoaiPhieu"></span></div>
+                        <div class="col-md-6"><strong>Trạng thái:</strong> <span id="dpTrangThai"></span></div>
+                        <div class="col-md-6"><strong>Nhà thuốc nguồn:</strong> <span id="dpNhaThuoc"></span></div>
+                        <div class="col-md-6"><strong>Đích / Lý do:</strong> <span id="dpDoiTac"></span></div>
+                        <div class="col-12"><strong>Ghi chú:</strong> <span id="dpGhiChu"></span></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc</th>
+                                <th>Số lô</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-end">SL</th>
+                                <th class="text-end">Đơn giá vốn</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyChiTietDuyet"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/kho/duyet-phieu.js}"></script>
+</th:block>
+</body>
+</html>

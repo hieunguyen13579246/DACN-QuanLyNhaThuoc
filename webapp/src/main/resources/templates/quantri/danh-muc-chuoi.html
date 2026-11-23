@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Quản lý Nhà cung cấp, Khu vực, Nhà thuốc', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-diagram-3 me-2 text-primary"></i>Quản lý Danh mục Chuỗi: Khu vực, Nhà thuốc & Nhà cung cấp</h5>
+            <small class="text-muted">Cấu trúc phân cấp khu vực hành chính, hệ thống cơ sở nhà thuốc và đối tác cung ứng dược phẩm</small>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tabDmNhaThuoc" type="button">
+                1. Hệ thống Nhà thuốc (<span th:text="${#lists.size(danhSachNhaThuoc)}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tabDmKhuVuc" type="button">
+                2. Khu vực địa lý (<span th:text="${#lists.size(danhSachKhuVuc)}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tabDmNcc" type="button">
+                3. Nhà cung cấp (<span th:text="${#lists.size(danhSachNcc)}">0</span>)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Tab 1: Nhà thuốc -->
+        <div class="tab-pane fade show active" id="tabDmNhaThuoc">
+            <div class="card card-clean">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold">Danh sách cơ sở nhà thuốc trong chuỗi</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnMoThemNhaThuoc">+ Thêm nhà thuốc</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Mã NT</th>
+                                <th>Tên nhà thuốc</th>
+                                <th>Địa chỉ</th>
+                                <th>SĐT</th>
+                                <th>Ngày khai trương</th>
+                                <th class="text-center">Trạng thái</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="nt : ${danhSachNhaThuoc}">
+                                <td class="font-monospace fw-bold text-primary" th:text="${nt.ma}"></td>
+                                <td class="fw-semibold" th:text="${nt.ten}"></td>
+                                <td class="small" th:text="${nt.diaChi}"></td>
+                                <td class="font-monospace small" th:text="${nt.soDienThoai}"></td>
+                                <td class="small" th:text="${nt.ngayKhaiTruong}"></td>
+                                <td class="text-center">
+                                    <span class="badge"
+                                          th:classappend="${nt.trangThai == 'HOAT_DONG' ? 'bg-success' : 'bg-secondary'}"
+                                          th:text="${nt.trangThai == 'HOAT_DONG' ? 'Đang hoạt động' : 'Ngừng hoạt động'}"></span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Khu vực -->
+        <div class="tab-pane fade" id="tabDmKhuVuc">
+            <div class="card card-clean">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold">Danh mục Khu vực hành chính (Thành phố/Tỉnh &amp; Quận/Huyện)</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnMoThemKhuVuc">+ Thêm khu vực</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Mã KV</th>
+                                <th>Tên khu vực</th>
+                                <th>Cấp hành chính</th>
+                                <th>Thuộc khu vực cha</th>
+                                <th class="text-end">Quy mô dân số</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="kv : ${danhSachKhuVuc}">
+                                <td class="font-monospace fw-bold text-primary" th:text="${kv.ma}"></td>
+                                <td class="fw-semibold" th:text="${kv.ten}"></td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${kv.cap == 'TINH' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-dark border'}"
+                                          th:text="${kv.tenCapHanhChinh}"></span>
+                                </td>
+                                <td class="small text-muted" th:text="${kv.tenKhuVucCha != null ? kv.tenKhuVucCha : '-'}"></td>
+                                <td class="text-end fw-semibold" th:text="${#numbers.formatInteger(kv.danSo, 0, 'POINT')}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Nhà cung cấp -->
+        <div class="tab-pane fade" id="tabDmNcc">
+            <div class="card card-clean">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold">Danh sách Nhà cung cấp dược phẩm</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnMoThemNcc">+ Thêm nhà cung cấp</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Mã NCC</th>
+                                <th>Tên nhà cung cấp</th>
+                                <th>Mã số thuế</th>
+                                <th>Số điện thoại</th>
+                                <th>Địa chỉ</th>
+                                <th class="text-center">Trạng thái</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="ncc : ${danhSachNcc}">
+                                <td class="font-monospace fw-bold text-primary" th:text="${ncc.ma}"></td>
+                                <td class="fw-semibold" th:text="${ncc.ten}"></td>
+                                <td class="font-monospace small" th:text="${ncc.maSoThue}"></td>
+                                <td class="font-monospace small" th:text="${ncc.soDienThoai}"></td>
+                                <td class="small" th:text="${ncc.diaChi}"></td>
+                                <td class="text-center">
+                                    <span class="badge bg-success" th:text="${ncc.trangThai == 'HOAT_DONG' ? 'Đang hoạt động' : 'Ngừng hoạt động'}"></span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Nhà thuốc -->
+    <div class="modal fade" id="modalThemNhaThuoc" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="formThemNhaThuoc" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Thêm nhà thuốc mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Mã NT <span class="text-danger">*</span></label>
+                            <input type="text" id="ntMa" class="form-control form-control-sm" required placeholder="NT009">
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label small fw-bold">Tên nhà thuốc <span class="text-danger">*</span></label>
+                            <input type="text" id="ntTen" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Khu vực <span class="text-danger">*</span></label>
+                        <select id="ntKhuVucId" class="form-select form-select-sm" required>
+                            <option th:each="kv : ${danhSachKhuVuc}" th:value="${kv.id}" th:text="${kv.ma + ' - ' + kv.ten}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Địa chỉ <span class="text-danger">*</span></label>
+                        <input type="text" id="ntDiaChi" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Số điện thoại</label>
+                            <input type="text" id="ntSdt" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Ngày khai trương</label>
+                            <input type="date" id="ntNgayKt" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Lưu nhà thuốc</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Khu vực -->
+    <div class="modal fade" id="modalThemKhuVuc" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="formThemKhuVuc" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Thêm khu vực địa lý</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Mã KV <span class="text-danger">*</span></label>
+                            <input type="text" id="kvMa" class="form-control form-control-sm" required placeholder="HCM-Q7">
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label small fw-bold">Tên khu vực <span class="text-danger">*</span></label>
+                            <input type="text" id="kvTen" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Cấp hành chính</label>
+                            <select id="kvCap" class="form-select form-select-sm">
+                                <option value="QUAN">Quận / Huyện</option>
+                                <option value="TINH">Thành phố / Tỉnh</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Dân số ước tính</label>
+                            <input type="number" id="kvDanSo" class="form-control form-control-sm" min="1000" value="250000" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Khu vực cha (nếu là Quận/Huyện)</label>
+                        <select id="kvChaId" class="form-select form-select-sm">
+                            <option value="">-- Không có (Cấp Tỉnh/TP) --</option>
+                            <option th:each="kv : ${danhSachKhuVuc}"
+                                    th:if="${kv.cap == 'TINH'}"
+                                    th:value="${kv.id}"
+                                    th:text="${kv.ten}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Lưu khu vực</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Thêm Nhà cung cấp -->
+    <div class="modal fade" id="modalThemNcc" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="formThemNcc" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Thêm nhà cung cấp dược phẩm</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Mã NCC <span class="text-danger">*</span></label>
+                            <input type="text" id="nccMa" class="form-control form-control-sm" required placeholder="NCC007">
+                        </div>
+                        <div class="col-8">
+                            <label class="form-label small fw-bold">Tên nhà cung cấp <span class="text-danger">*</span></label>
+                            <input type="text" id="nccTen" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Mã số thuế</label>
+                            <input type="text" id="nccMst" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Số điện thoại</label>
+                            <input type="text" id="nccSdt" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Địa chỉ</label>
+                        <input type="text" id="nccDiaChi" class="form-control form-control-sm">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Lưu nhà cung cấp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/thongke/danh-muc-chuoi.js}"></script>
+</th:block>
+</body>
+</html>

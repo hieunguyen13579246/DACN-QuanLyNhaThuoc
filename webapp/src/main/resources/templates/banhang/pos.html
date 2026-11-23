@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Bán hàng tại quầy (POS)', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="row g-3">
+        <!-- Cột trái: Quét mã, tìm thuốc, giỏ hàng, phân bổ lô FEFO -->
+        <div class="col-lg-8">
+            <!-- Thanh quét mã vạch & tìm thuốc -->
+            <div class="card card-clean mb-3">
+                <div class="card-body">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-bold text-primary mb-1">
+                                <i class="bi bi-upc-scan me-1"></i>Quét mã vạch (EAN-13 / Code128 / GS1) — Luôn tự động nhận máy quét
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white"><i class="bi bi-upc-scan"></i></span>
+                                <input type="text" id="posBarcodeInput"
+                                       data-barcode-input="true"
+                                       class="form-control barcode-scan-box"
+                                       placeholder="Quét mã vạch hoặc nhập mã rồi nhấn Enter (F2)..."
+                                       autocomplete="off">
+                                <button type="button" class="btn btn-primary fw-semibold" id="btnPosScanManual">
+                                    Thêm mã
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" id="btnToggleCameraPos" title="Bật/tắt camera quét mã">
+                                    <i class="bi bi-camera-video me-1"></i>Bật Camera quét mã
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-secondary mb-1">
+                                <i class="bi bi-search me-1"></i>Tìm thuốc theo tên / hoạt chất (F3)
+                            </label>
+                            <div class="position-relative">
+                                <input type="text" id="posSearchDrugInput" class="form-control"
+                                       placeholder="Gõ tên thuốc, mã thuốc, hoạt chất..." autocomplete="off">
+                                <div id="posSearchDropdown" class="list-group position-absolute w-100 shadow-sm d-none"
+                                     style="z-index: 1050; max-height: 280px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung camera ẩn mặc định -->
+                    <div id="posCameraReader" style="max-width: 380px;" class="mx-auto border rounded p-2 mt-2 d-none"></div>
+
+                    <!-- Thông báo kết quả quét mã vạch -->
+                    <div id="posBarcodeNotFoundAlert" class="alert alert-warning mt-2 mb-0 py-2 small d-none"></div>
+                </div>
+            </div>
+
+            <!-- Danh sách giỏ hàng -->
+            <div class="card card-clean mb-3">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold"><i class="bi bi-cart3 me-1 text-primary"></i>Giỏ hàng hiện tại (<span id="posCartCount">0</span> mặt hàng)</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearCart">
+                        <i class="bi bi-trash me-1"></i>Xóa giỏ (F4)
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th style="width: 12%">Mã thuốc</th>
+                                <th style="width: 34%">Tên thuốc & Hoạt chất</th>
+                                <th style="width: 10%">ĐVT</th>
+                                <th style="width: 15%" class="text-end">Đơn giá</th>
+                                <th style="width: 14%" class="text-center">Số lượng</th>
+                                <th style="width: 15%" class="text-end">Thành tiền</th>
+                                <th style="width: 5%"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyPosCart">
+                            <tr id="rowEmptyCart">
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    Chưa có thuốc trong giỏ. Quét mã vạch hoặc tìm tên thuốc để thêm vào giỏ.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng xem trước phân bổ lô FEFO (sp_XemTruocFEFO) -->
+            <div class="card card-clean">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold small text-uppercase text-muted">
+                        <i class="bi bi-layers me-1 text-primary"></i>Phân bổ lô tự động theo FEFO (sp_XemTruocFEFO)
+                    </span>
+                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" id="btnRefreshFefo">
+                        <i class="bi bi-arrow-clockwise"></i> Kiểm tra lại FEFO
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div id="fefoErrorBox" class="alert alert-danger m-2 py-2 small d-none"></div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Thuốc</th>
+                                <th>Số lô xuất</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-center">Mức hạn dùng</th>
+                                <th class="text-end">SL phân bổ</th>
+                                <th class="text-end">Đơn giá</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyFefoPreview">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3 small">
+                                    Hệ thống sẽ tự động gọi <code>sp_XemTruocFEFO</code> khi có thuốc trong giỏ.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Khách hàng, Đơn thuốc, Tổng tiền & Thanh toán -->
+        <div class="col-lg-4">
+            <div class="card card-clean mb-3">
+                <div class="card-body">
+                    <!-- Tổng tiền hiển thị lớn -->
+                    <div class="pos-total-box mb-3 text-center">
+                        <div class="text-muted small fw-semibold text-uppercase">Khách cần thanh toán</div>
+                        <div class="pos-total-amount" id="posThanhToanDisplay">0 ₫</div>
+                    </div>
+
+                    <!-- Cảnh báo thuốc kê đơn bắt buộc gắn đơn -->
+                    <div id="posRxWarning" class="alert alert-danger py-2 small d-none">
+                        <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                        <strong>Thuốc kê đơn (Rx):</strong> Giỏ hàng có thuốc bắt buộc kê đơn. Vui lòng chọn đơn thuốc hợp lệ bên dưới trước khi thanh toán!
+                    </div>
+
+                    <!-- Khách hàng -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold mb-1">Khách hàng (tra theo SĐT)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="posSdtKhach" class="form-control" placeholder="Nhập SĐT khách hàng (VD: 0901234567)">
+                            <button type="button" class="btn btn-outline-primary" id="btnPosTimKhach">Tìm</button>
+                            <button type="button" class="btn btn-outline-secondary" id="btnPosXoaKhach" title="Bỏ chọn khách"><i class="bi bi-x"></i></button>
+                        </div>
+                        <input type="hidden" id="posKhachHangId">
+                        <div id="posKhachHangInfo" class="small text-success fw-semibold mt-1">Khách vãng lai (Khách lẻ)</div>
+                    </div>
+
+                    <!-- Đơn thuốc -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold mb-0">Đơn thuốc đính kèm</label>
+                            <a th:href="@{/donthuoc}" target="_blank" class="small text-decoration-none">+ Tiếp nhận đơn mới</a>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <select id="posDonThuocSelect" class="form-select"
+                                    th:data-preselected="${donThuocChonSan != null ? donThuocChonSan.id : ''}">
+                                <option value="">-- Bán lẻ không theo đơn --</option>
+                                <optgroup label="Đơn chưa bán">
+                                    <option th:each="d : ${danhSachDonHopLe}"
+                                            th:value="${d.id}"
+                                            th:selected="${donThuocChonSan != null and donThuocChonSan.id == d.id}"
+                                            th:text="${d.maDon + ' - ' + (d.tenKhachHang != null ? d.tenKhachHang : 'Khách lẻ') + ' (' + d.chanDoan + ')'}">
+                                    </option>
+                                </optgroup>
+                                <optgroup label="Đơn bán một phần">
+                                    <option th:each="d : ${danhSachDonBanMotPhan}"
+                                            th:value="${d.id}"
+                                            th:selected="${donThuocChonSan != null and donThuocChonSan.id == d.id}"
+                                            th:text="${d.maDon + ' - ' + (d.tenKhachHang != null ? d.tenKhachHang : 'Khách lẻ') + ' (' + d.chanDoan + ')'}">
+                                    </option>
+                                </optgroup>
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" id="btnNapThuocTuDon" title="Nạp các thuốc còn lại trong đơn vào giỏ">
+                                Nạp đơn
+                            </button>
+                        </div>
+                        <div id="posDonThuocInfo" class="small text-muted mt-1"></div>
+                    </div>
+
+                    <hr class="my-2">
+
+                    <!-- Tổng tiền hàng & Giảm giá -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-muted">Tổng tiền hàng:</span>
+                        <span class="fw-bold" id="posTongTienHangDisplay">0 ₫</span>
+                    </div>
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-5">
+                            <label class="small text-muted mb-0">Giảm giá (VND):</label>
+                        </div>
+                        <div class="col-7">
+                            <input type="number" id="posGiamGiaInput" class="form-control form-control-sm text-end"
+                                   min="0" step="1000" value="0">
+                        </div>
+                    </div>
+                    <div class="row g-2 align-items-center mb-2">
+                        <div class="col-5">
+                            <label class="small text-muted mb-0">Phương thức TT:</label>
+                        </div>
+                        <div class="col-7">
+                            <select id="posPhuongThucSelect" class="form-select form-select-sm">
+                                <option value="TIEN_MAT">Tiền mặt</option>
+                                <option value="CHUYEN_KHOAN">Chuyển khoản QR</option>
+                                <option value="THE">Thẻ ngân hàng</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Khối tính tiền khách đưa & tiền thối lại (hiển thị khi chọn Tiền mặt) -->
+                    <div id="posCashPaymentBox" class="p-2 mb-3 rounded border bg-light">
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-5">
+                                <label for="posTienKhachDuaInput" class="small fw-bold text-dark mb-0">
+                                    <i class="bi bi-cash-coin text-success me-1"></i>Khách đưa (VND):
+                                </label>
+                            </div>
+                            <div class="col-7">
+                                <input type="number" id="posTienKhachDuaInput"
+                                       class="form-control form-control-sm text-end fw-bold text-primary"
+                                       min="0" step="1000" placeholder="Nhập tiền khách đưa...">
+                            </div>
+                        </div>
+                        <!-- Gợi ý mệnh giá tiền mặt nhanh -->
+                        <div class="d-flex flex-wrap gap-1 justify-content-end mb-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 small btn-quick-cash" data-mode="exact">Đưa đủ</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 small btn-quick-cash" data-amount="20000">20k</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 small btn-quick-cash" data-amount="50000">50k</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 small btn-quick-cash" data-amount="100000">100k</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 small btn-quick-cash" data-amount="200000">200k</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 small btn-quick-cash" data-amount="500000">500k</button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                            <span class="small fw-bold" id="posTienThoiLabel">Tiền thối lại khách:</span>
+                            <span class="fs-6 fw-bold text-success" id="posTienThoiDisplay">0 ₫</span>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnPosThanhToan" class="btn btn-primary w-100 py-2 fw-bold">
+                        <i class="bi bi-check2-circle me-1"></i> THANH TOÁN & IN HÓA ĐƠN (F9)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/banhang/pos.js}"></script>
+</th:block>
+</body>
+</html>

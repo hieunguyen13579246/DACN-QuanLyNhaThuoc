@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/main :: layout('Cảnh báo hạn dùng & tồn kho', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle me-2 text-primary"></i>Trung tâm cảnh báo: Hạn dùng, Tồn thấp & Tồn chậm luân chuyển</h5>
+            <small class="text-muted">Đọc từ <code>vw_CanhBaoHanDung</code>, <code>vw_CanhBaoTonThap</code> và <code>vw_TonChamLuanChuyen</code> kèm nút tạo nhanh phiếu</small>
+        </div>
+    </div>
+
+    <!-- Thẻ tổng quan mức cảnh báo -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="kpi-card border-danger">
+                <div class="kpi-label text-danger">Đã hết hạn (Đỏ)</div>
+                <div class="kpi-value text-danger" th:text="${tongHop.soLoHetHan + ' lô'}">0 lô</div>
+                <small class="text-muted">Bắt buộc biệt trữ & lập phiếu xuất hủy</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Cận hạn ≤30 / ≤60 / ≤90 ngày</div>
+                <div class="kpi-value">
+                    <span class="text-warning" th:text="${tongHop.soLoCanHan30}">0</span> /
+                    <span class="text-secondary" th:text="${tongHop.soLoCanHan60}">0</span> /
+                    <span class="text-info" th:text="${tongHop.soLoCanHan90}">0</span>
+                </div>
+                <small class="text-muted">Ưu tiên xuất FEFO hoặc điều chuyển</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Hết hàng / Tồn thấp</div>
+                <div class="kpi-value">
+                    <span class="text-danger" th:text="${tongHop.soThuocHetHang}">0</span> /
+                    <span class="text-warning" th:text="${tongHop.soThuocTonThap}">0</span>
+                </div>
+                <small class="text-muted">Cần lập phiếu nhập bổ sung</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Tồn chậm luân chuyển</div>
+                <div class="kpi-value text-primary" th:text="${tongHop.soLoTonCham + ' lô'}">0 lô</div>
+                <small class="text-muted">Không phát sinh bán ≥ ngưỡng cấu hình</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/canhbao}" class="row g-2 align-items-end">
+                <div class="col-md-4" th:if="${danhSachNhaThuoc != null}">
+                    <label class="form-label small mb-1">Nhà thuốc</label>
+                    <select name="nhaThuocId" class="form-select form-select-sm">
+                        <option value="">-- Toàn chuỗi --</option>
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:selected="${nhaThuocId == nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Mức cảnh báo hạn dùng</label>
+                    <select name="mucHanDung" class="form-select form-select-sm">
+                        <option value="">-- Tất cả mức hạn dùng --</option>
+                        <option value="DA_HET_HAN" th:selected="${mucHanDung == 'DA_HET_HAN'}">Đã hết hạn (Đỏ)</option>
+                        <option value="CAN_HAN_30" th:selected="${mucHanDung == 'CAN_HAN_30'}">Cận hạn ≤30 ngày (Cam)</option>
+                        <option value="CAN_HAN_60" th:selected="${mucHanDung == 'CAN_HAN_60'}">Cận hạn ≤60 ngày (Vàng)</option>
+                        <option value="CAN_HAN_90" th:selected="${mucHanDung == 'CAN_HAN_90'}">Cận hạn ≤90 ngày (Xanh nhạt)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Mức cảnh báo tồn thấp</label>
+                    <select name="mucTonThap" class="form-select form-select-sm">
+                        <option value="">-- Tất cả mức tồn thấp --</option>
+                        <option value="HET_HANG" th:selected="${mucTonThap == 'HET_HANG'}">Đã hết hàng (0 khả dụng)</option>
+                        <option value="TON_THAP" th:selected="${mucTonThap == 'TON_THAP'}">Tồn thấp ≤ định mức tối thiểu</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Lọc cảnh báo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabs 3 nhóm cảnh báo -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tabCbHanDung" type="button">
+                1. Cảnh báo hạn dùng (<span th:text="${#lists.size(dsHanDung)}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tabCbTonThap" type="button">
+                2. Cảnh báo tồn thấp (<span th:text="${#lists.size(dsTonThap)}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tabCbTonCham" type="button">
+                3. Tồn chậm luân chuyển (<span th:text="${#lists.size(dsTonCham)}">0</span>)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Tab 1: Hạn dùng -->
+        <div class="tab-pane fade show active" id="tabCbHanDung">
+            <div class="card card-clean">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Nhà thuốc</th>
+                                <th>Số lô</th>
+                                <th>Thuốc (ĐVT)</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-center">Số ngày còn</th>
+                                <th class="text-center">Mức cảnh báo</th>
+                                <th class="text-end">Tồn / Khả dụng</th>
+                                <th class="text-end">Giá trị tồn</th>
+                                <th class="text-end">Tạo nhanh phiếu</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(dsHanDung)}">
+                                <td colspan="9" class="text-center text-muted py-4">Không có lô thuốc nào bị cảnh báo hạn dùng.</td>
+                            </tr>
+                            <tr th:each="c : ${dsHanDung}">
+                                <td class="small" th:text="${c.tenNhaThuoc}"></td>
+                                <td class="font-monospace fw-bold text-primary" th:text="${c.soLo}"></td>
+                                <td class="fw-semibold" th:text="${c.tenThuoc + ' (' + c.donViTinh + ')'}"></td>
+                                <td th:text="${c.hanDung}"></td>
+                                <td class="text-center fw-bold" th:text="${c.soNgayConLai + ' ngày'}"></td>
+                                <td class="text-center">
+                                    <span th:replace="~{fragments/badges :: mucCanhBaoHanDung(${c.mucCanhBao})}"></span>
+                                </td>
+                                <td class="text-end" th:text="${c.soLuongTon + ' / ' + c.soLuongKhaDung}"></td>
+                                <td class="text-end fw-semibold" th:text="${#numbers.formatDecimal(c.giaTriTon, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                                <td class="text-end">
+                                    <a th:if="${c.mucCanhBao == 'DA_HET_HAN'}"
+                                       sec:authorize="hasAuthority('THUKHO')"
+                                       th:href="@{/kho/phieu-kho(moForm='XUAT_HUY',prefillLoThuocId=${c.loThuocId},prefillSoLuong=${c.soLuongKhaDung},prefillLyDo='HET_HAN')}"
+                                       class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash3 me-1"></i>Tạo phiếu hủy
+                                    </a>
+                                    <a th:if="${c.mucCanhBao != 'DA_HET_HAN'}"
+                                       sec:authorize="hasAuthority('THUKHO')"
+                                       th:href="@{/kho/phieu-kho(moForm='DIEU_CHUYEN',prefillLoThuocId=${c.loThuocId},prefillSoLuong=${c.soLuongKhaDung})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-truck me-1"></i>Điều chuyển
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Tồn thấp -->
+        <div class="tab-pane fade" id="tabCbTonThap">
+            <div class="card card-clean">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Nhà thuốc</th>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc (ĐVT)</th>
+                                <th class="text-center">Mức cảnh báo</th>
+                                <th class="text-end">Tồn khả dụng</th>
+                                <th class="text-end">Định mức Min / Max</th>
+                                <th class="text-end">SL gợi ý nhập</th>
+                                <th class="text-end">Tạo nhanh phiếu</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(dsTonThap)}">
+                                <td colspan="8" class="text-center text-muted py-4">Không có thuốc nào bị cảnh báo tồn thấp.</td>
+                            </tr>
+                            <tr th:each="t : ${dsTonThap}">
+                                <td class="small" th:text="${t.tenNhaThuoc}"></td>
+                                <td class="font-monospace fw-semibold text-primary" th:text="${t.maThuoc}"></td>
+                                <td class="fw-semibold" th:text="${t.tenThuoc + ' (' + t.donViTinh + ')'}"></td>
+                                <td class="text-center">
+                                    <span th:replace="~{fragments/badges :: mucCanhBaoTonThap(${t.mucCanhBao})}"></span>
+                                </td>
+                                <td class="text-end fw-bold text-danger" th:text="${t.tonKhaDung}"></td>
+                                <td class="text-end" th:text="${t.tonToiThieu + ' / ' + t.tonToiDa}"></td>
+                                <td class="text-end fw-bold text-primary" th:text="${t.soLuongCanNhap}"></td>
+                                <td class="text-end">
+                                    <a sec:authorize="hasAuthority('THUKHO')"
+                                       th:href="@{/kho/nhap-kho(thuocId=${t.thuocId},soLuong=${t.soLuongCanNhap})}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i>Nhập kho ngay
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Tồn chậm luân chuyển -->
+        <div class="tab-pane fade" id="tabCbTonCham">
+            <div class="card card-clean">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Nhà thuốc</th>
+                                <th>Số lô</th>
+                                <th>Thuốc (ĐVT)</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-end">SL Tồn</th>
+                                <th class="text-end">Giá trị tồn</th>
+                                <th class="text-end">Bán 30 ngày qua</th>
+                                <th class="text-end">Số ngày không bán</th>
+                                <th class="text-end">Tạo nhanh phiếu</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(dsTonCham)}">
+                                <td colspan="9" class="text-center text-muted py-4">Không có lô thuốc nào bị tồn chậm luân chuyển.</td>
+                            </tr>
+                            <tr th:each="tc : ${dsTonCham}">
+                                <td class="small" th:text="${tc.tenNhaThuoc}"></td>
+                                <td class="font-monospace fw-bold text-primary" th:text="${tc.soLo}"></td>
+                                <td class="fw-semibold" th:text="${tc.tenThuoc + ' (' + tc.donViTinh + ')'}"></td>
+                                <td th:text="${tc.hanDung}"></td>
+                                <td class="text-end fw-semibold" th:text="${tc.soLuongTon}"></td>
+                                <td class="text-end fw-semibold" th:text="${#numbers.formatDecimal(tc.giaTriTon, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                                <td class="text-end" th:text="${tc.soLuongBan30Ngay}"></td>
+                                <td class="text-end fw-bold text-warning" th:text="${tc.soNgayKhongBan + ' ngày'}"></td>
+                                <td class="text-end">
+                                    <a sec:authorize="hasAuthority('THUKHO')"
+                                       th:href="@{/kho/phieu-kho(moForm='DIEU_CHUYEN',prefillLoThuocId=${tc.loThuocId},prefillSoLuong=${tc.soLuongTon})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-truck me-1"></i>Điều chuyển đi
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/canhbao/canh-bao.js}"></script>
+</th:block>
+</body>
+</html>

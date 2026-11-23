@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Định mức tồn kho', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-2 text-primary"></i>Thiết lập định mức tồn kho tối thiểu & tối đa</h5>
+            <small class="text-muted">Cơ sở tính toán cảnh báo tồn thấp (<code>vw_CanhBaoTonThap</code>) và đề xuất nhập hàng (<code>sp_DeXuatNhapHang</code>)</small>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" id="btnMoModalDinhMuc">
+            <i class="bi bi-plus-lg me-1"></i>Thiết lập / Cập nhật định mức
+        </button>
+    </div>
+
+    <div class="card card-clean mb-3" th:if="${danhSachNhaThuoc != null}">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/kho/dinh-muc}" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small mb-1">Nhà thuốc</label>
+                    <select name="nhaThuocId" class="form-select form-select-sm">
+                        <option value="">-- Toàn chuỗi --</option>
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:selected="${nhaThuocId == nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Lọc</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Nhà thuốc</th>
+                        <th>Mã thuốc</th>
+                        <th>Tên thuốc (ĐVT)</th>
+                        <th class="text-end">Tồn tối thiểu (Min)</th>
+                        <th class="text-end">Tồn tối đa (Max)</th>
+                        <th class="text-center">Số ngày giao hàng (Lead time)</th>
+                        <th class="text-end">Tồn khả dụng hiện tại</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(danhSachDinhMuc)}">
+                        <td colspan="8" class="text-center text-muted py-4">Chưa có định mức tồn nào được thiết lập.</td>
+                    </tr>
+                    <tr th:each="dm : ${danhSachDinhMuc}">
+                        <td class="small" th:text="${dm.tenNhaThuoc}"></td>
+                        <td class="font-monospace fw-semibold text-primary" th:text="${dm.maThuoc}"></td>
+                        <td class="fw-semibold" th:text="${dm.tenThuoc + ' (' + dm.donViTinh + ')'}"></td>
+                        <td class="text-end fw-semibold text-warning" th:text="${dm.tonToiThieu}"></td>
+                        <td class="text-end fw-semibold text-primary" th:text="${dm.tonToiDa}"></td>
+                        <td class="text-center" th:text="${dm.soNgayGiaoHang + ' ngày'}"></td>
+                        <td class="text-end fw-bold"
+                            th:classappend="${dm.tonKhaDungHienTai <= dm.tonToiThieu ? 'text-danger' : 'text-success'}"
+                            th:text="${dm.tonKhaDungHienTai}"></td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-sua-dm"
+                                    th:data-nt-id="${dm.nhaThuocId}"
+                                    th:data-thuoc-id="${dm.thuocId}"
+                                    th:data-min="${dm.tonToiThieu}"
+                                    th:data-max="${dm.tonToiDa}"
+                                    th:data-lead="${dm.soNgayGiaoHang}">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Thiết lập định mức -->
+    <div class="modal fade" id="modalDinhMuc" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="formDinhMuc" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Thiết lập định mức tồn kho</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3" th:if="${danhSachNhaThuoc != null}">
+                        <label class="form-label small fw-bold">Nhà thuốc</label>
+                        <select id="dmNhaThuocId" class="form-select form-select-sm">
+                            <option th:each="nt : ${danhSachNhaThuoc}"
+                                    th:value="${nt.id}"
+                                    th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Thuốc <span class="text-danger">*</span></label>
+                        <select id="dmThuocId" class="form-select form-select-sm" required>
+                            <option value="">-- Chọn thuốc --</option>
+                            <option th:each="t : ${danhSachThuoc}"
+                                    th:value="${t.id}"
+                                    th:text="${t.ma + ' - ' + t.ten + ' (' + t.donViTinh + ')'}"></option>
+                        </select>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Tồn tối thiểu <span class="text-danger">*</span></label>
+                            <input type="number" id="dmTonMin" class="form-control form-control-sm" min="0" value="30" required>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Tồn tối đa <span class="text-danger">*</span></label>
+                            <input type="number" id="dmTonMax" class="form-control form-control-sm" min="1" value="200" required>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold">Ngày giao hàng <span class="text-danger">*</span></label>
+                            <input type="number" id="dmLeadTime" class="form-control form-control-sm" min="1" value="3" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Lưu định mức</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/kho/dinh-muc.js}"></script>
+</th:block>
+</body>
+</html>

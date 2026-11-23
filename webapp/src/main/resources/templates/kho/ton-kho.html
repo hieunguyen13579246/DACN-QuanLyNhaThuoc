@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/main :: layout('Tồn kho theo thuốc & theo lô', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-boxes me-2 text-primary"></i>Tra cứu tồn kho theo thuốc & theo lô</h5>
+            <small class="text-muted">Đọc từ <code>vw_TonKhoTheoThuoc</code> và bảng <code>TonKho</code> + <code>LoThuoc</code> (sắp xếp FEFO)</small>
+        </div>
+        <div sec:authorize="hasAuthority('THUKHO')">
+            <a th:href="@{/kho/nhap-kho}" class="btn btn-sm btn-primary me-1"><i class="bi bi-box-arrow-in-down me-1"></i>Nhập kho</a>
+            <a th:href="@{/kho/phieu-kho}" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-left-right me-1"></i>Điều chuyển / Xuất hủy</a>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/kho/ton-kho}" class="row g-2 align-items-end">
+                <div class="col-md-3" th:if="${danhSachNhaThuoc != null}">
+                    <label class="form-label small mb-1">Nhà thuốc</label>
+                    <select name="nhaThuocId" class="form-select form-select-sm">
+                        <option value="">-- Toàn chuỗi --</option>
+                        <option th:each="nt : ${danhSachNhaThuoc}"
+                                th:value="${nt.id}"
+                                th:selected="${nhaThuocId == nt.id}"
+                                th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Nhóm thuốc</label>
+                    <select name="nhomThuocId" class="form-select form-select-sm">
+                        <option value="">-- Tất cả nhóm --</option>
+                        <option th:each="nh : ${danhSachNhom}"
+                                th:value="${nh.id}"
+                                th:selected="${nhomThuocId == nh.id}"
+                                th:text="${nh.ten}"></option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small mb-1">Tìm thuốc / Số lô</label>
+                    <input type="text" name="tuKhoa" class="form-control form-control-sm"
+                           placeholder="Nhập mã thuốc, tên thuốc hoặc số lô..." th:value="${tuKhoa}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Lọc dữ liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabs chuyển đổi chế độ xem -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#tabTonThuoc" type="button">
+                <i class="bi bi-capsule me-1"></i>Tồn tổng hợp theo thuốc (<span th:text="${#lists.size(tonTheoThuoc)}">0</span>)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#tabTonLo" type="button">
+                <i class="bi bi-layers me-1"></i>Chi tiết tồn theo lô FEFO (<span th:text="${#lists.size(tonTheoLo)}">0</span>)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Tab 1: Tồn theo thuốc -->
+        <div class="tab-pane fade show active" id="tabTonThuoc">
+            <div class="card card-clean">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Nhà thuốc</th>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc</th>
+                                <th>Nhóm</th>
+                                <th>ĐVT</th>
+                                <th class="text-end">Tổng tồn</th>
+                                <th class="text-end">Đang giữ chỗ</th>
+                                <th class="text-end">Tồn khả dụng</th>
+                                <th class="text-center">Số lô còn tồn</th>
+                                <th>Hạn dùng gần nhất</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(tonTheoThuoc)}">
+                                <td colspan="10" class="text-center text-muted py-4">Không có dữ liệu tồn kho theo thuốc.</td>
+                            </tr>
+                            <tr th:each="tk : ${tonTheoThuoc}">
+                                <td class="small" th:text="${tk.tenNhaThuoc}"></td>
+                                <td class="font-monospace fw-semibold text-primary" th:text="${tk.maThuoc}"></td>
+                                <td class="fw-semibold" th:text="${tk.tenThuoc}"></td>
+                                <td class="small text-muted" th:text="${tk.tenNhom}"></td>
+                                <td th:text="${tk.donViTinh}"></td>
+                                <td class="text-end fw-semibold" th:text="${tk.tongTon}"></td>
+                                <td class="text-end text-warning fw-semibold" th:text="${tk.tongGiuCho}"></td>
+                                <td class="text-end fw-bold"
+                                    th:classappend="${tk.tongKhaDung == 0 ? 'text-danger' : 'text-success'}"
+                                    th:text="${tk.tongKhaDung}"></td>
+                                <td class="text-center" th:text="${tk.soLoConTon}"></td>
+                                <td th:text="${tk.hanDungGanNhat != null ? tk.hanDungGanNhat : '-'}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Tồn theo lô -->
+        <div class="tab-pane fade" id="tabTonLo">
+            <div class="card card-clean">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Nhà thuốc</th>
+                                <th>Số lô</th>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc</th>
+                                <th>Ngày SX</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-center">Còn lại</th>
+                                <th class="text-end">Giá nhập</th>
+                                <th class="text-end">SL Tồn</th>
+                                <th class="text-end">Giữ chỗ</th>
+                                <th class="text-end">Khả dụng</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:if="${#lists.isEmpty(tonTheoLo)}">
+                                <td colspan="11" class="text-center text-muted py-4">Không có dữ liệu lô thuốc.</td>
+                            </tr>
+                            <tr th:each="lo : ${tonTheoLo}">
+                                <td class="small" th:text="${lo.tenNhaThuoc}"></td>
+                                <td class="font-monospace fw-bold text-primary" th:text="${lo.soLo}"></td>
+                                <td class="font-monospace small" th:text="${lo.maThuoc}"></td>
+                                <td class="fw-semibold" th:text="${lo.tenThuoc + ' (' + lo.donViTinh + ')'}"></td>
+                                <td class="small" th:text="${lo.ngaySanXuat}"></td>
+                                <td class="small fw-semibold" th:text="${lo.hanDung}"></td>
+                                <td class="text-center">
+                                    <span th:if="${lo.soNgayConLai <= 0}" class="badge badge-exp-expired" th:text="${'Hết hạn (' + lo.soNgayConLai + 'd)'}"></span>
+                                    <span th:if="${lo.soNgayConLai > 0 and lo.soNgayConLai <= 30}" class="badge badge-exp-30" th:text="${lo.soNgayConLai + ' ngày'}"></span>
+                                    <span th:if="${lo.soNgayConLai > 30 and lo.soNgayConLai <= 60}" class="badge badge-exp-60" th:text="${lo.soNgayConLai + ' ngày'}"></span>
+                                    <span th:if="${lo.soNgayConLai > 60 and lo.soNgayConLai <= 90}" class="badge badge-exp-90" th:text="${lo.soNgayConLai + ' ngày'}"></span>
+                                    <span th:if="${lo.soNgayConLai > 90}" class="badge bg-light text-secondary border" th:text="${lo.soNgayConLai + ' ngày'}"></span>
+                                </td>
+                                <td class="text-end small" th:text="${#numbers.formatDecimal(lo.giaNhap, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                                <td class="text-end fw-semibold" th:text="${lo.soLuongTon}"></td>
+                                <td class="text-end text-warning fw-semibold" th:text="${lo.soLuongGiuCho}"></td>
+                                <td class="text-end fw-bold"
+                                    th:classappend="${lo.soLuongKhaDung == 0 ? 'text-danger' : 'text-success'}"
+                                    th:text="${lo.soLuongKhaDung}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts"></th:block>
+</body>
+</html>

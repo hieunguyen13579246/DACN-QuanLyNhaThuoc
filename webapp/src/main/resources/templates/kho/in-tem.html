@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('In tem mã vạch', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-printer me-2 text-primary"></i>In tem mã vạch nội bộ & EAN-13</h5>
+            <small class="text-muted">Sinh mã vạch chuẩn Code128 / EAN-13 bằng JsBarcode, hỗ trợ khổ giấy in nhiệt 2 tem/hàng (35×22mm)</small>
+        </div>
+        <button type="button" id="btnPrintLabels" class="btn btn-sm btn-primary fw-bold">
+            <i class="bi bi-printer-fill me-1"></i>In tem ngay (Ctrl+P)
+        </button>
+    </div>
+
+    <div class="row g-3">
+        <!-- Cấu hình tem cần in -->
+        <div class="col-lg-5 no-print">
+            <div class="card card-clean">
+                <div class="card-header bg-white py-2">
+                    <span class="fw-bold">Thiết lập nội dung tem mã vạch</span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Chọn nhanh từ lô thuốc đang tồn kho</label>
+                        <select id="temChonLoSelect" class="form-select form-select-sm">
+                            <option value="">-- Chọn lô thuốc để tự điền --</option>
+                            <option th:each="lo : ${danhSachLo}"
+                                    th:value="${lo.loThuocId}"
+                                    th:data-ten="${lo.tenThuoc}"
+                                    th:data-ma-thuoc="${lo.maThuoc}"
+                                    th:data-barcode="${lo.maVachChinh != null ? lo.maVachChinh : lo.maThuoc}"
+                                    th:data-so-lo="${lo.soLo}"
+                                    th:data-han-dung="${lo.hanDung}"
+                                    th:data-gia="${lo.giaBanLe}"
+                                    th:data-dvt="${lo.donViTinh}"
+                                    th:text="${lo.soLo + ' - ' + lo.tenThuoc + ' (Hạn: ' + lo.hanDung + ')'}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Tên thuốc hiển thị trên tem <span class="text-danger">*</span></label>
+                        <input type="text" id="temTenThuoc" class="form-control form-control-sm" value="Paracetamol 500mg">
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold">Mã vạch (EAN-13 hoặc Code128) <span class="text-danger">*</span></label>
+                            <input type="text" id="temMaVach" class="form-control form-control-sm font-monospace" value="8934567890128">
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold">Chuẩn mã vạch</label>
+                            <select id="temFormat" class="form-select form-select-sm">
+                                <option value="CODE128">CODE128 (Đa năng)</option>
+                                <option value="EAN13">EAN-13 (13 số)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Số lô</label>
+                            <input type="text" id="temSoLo" class="form-control form-control-sm font-monospace" value="LO-2026-01">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Hạn dùng</label>
+                            <input type="text" id="temHanDung" class="form-control form-control-sm" value="2027-12-31">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Giá bán (VND)</label>
+                            <input type="number" id="temGiaBan" class="form-control form-control-sm text-end" value="15000">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Số lượng tem cần in</label>
+                            <input type="number" id="temSoLuongIn" class="form-control form-control-sm" min="1" max="100" value="6">
+                        </div>
+                        <div class="col-6">
+                            <button type="button" id="btnRenderLabels" class="btn btn-sm btn-outline-primary w-100 fw-semibold">
+                                <i class="bi bi-arrow-repeat me-1"></i>Tạo bản xem trước tem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khung xem trước và in tem -->
+        <div class="col-lg-7">
+            <div class="card card-clean">
+                <div class="card-header bg-white py-2 no-print">
+                    <span class="fw-bold">Bản xem trước khổ tem in nhiệt (35×22mm)</span>
+                </div>
+                <div class="card-body">
+                    <div id="labelPrintGrid" class="label-sheet-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <script th:src="@{/js/kho/in-tem.js}"></script>
+</th:block>
+</body>
+</html>

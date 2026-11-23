@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/main :: layout('Phiếu điều chuyển & xuất hủy', ~{::content}, ~{::scripts})}">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3"
+         id="phieuKhoRoot"
+         th:data-mo-form="${moForm}"
+         th:data-prefill-lo="${prefillLoThuocId}"
+         th:data-prefill-sl="${prefillSoLuong}"
+         th:data-prefill-lydo="${prefillLyDo}">
+        <div>
+            <h5 class="fw-bold mb-0"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Quản lý phiếu kho: Điều chuyển & Xuất hủy</h5>
+            <small class="text-muted">Khi lập phiếu, hệ thống tự động giữ chỗ tồn kho (<code>so_luong_giu_cho</code>) cho tới khi Quản lý duyệt hoặc từ chối/hủy</small>
+        </div>
+        <div sec:authorize="hasAuthority('THUKHO')">
+            <button type="button" class="btn btn-sm btn-primary me-1" id="btnMoModalDieuChuyen">
+                <i class="bi bi-truck me-1"></i>Lập phiếu điều chuyển
+            </button>
+            <button type="button" class="btn btn-sm btn-danger" id="btnMoModalXuatHuy">
+                <i class="bi bi-trash3 me-1"></i>Lập phiếu xuất hủy
+            </button>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card card-clean mb-3">
+        <div class="card-body py-2">
+            <form method="get" th:action="@{/kho/phieu-kho}" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Loại phiếu</label>
+                    <select name="loaiPhieu" class="form-select form-select-sm">
+                        <option value="">-- Tất cả loại phiếu --</option>
+                        <option value="NHAP_KHO" th:selected="${loaiPhieu == 'NHAP_KHO'}">Nhập kho</option>
+                        <option value="DIEU_CHUYEN" th:selected="${loaiPhieu == 'DIEU_CHUYEN'}">Điều chuyển liên chi nhánh</option>
+                        <option value="XUAT_HUY" th:selected="${loaiPhieu == 'XUAT_HUY'}">Xuất hủy</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Trạng thái</label>
+                    <select name="trangThai" class="form-select form-select-sm">
+                        <option value="">-- Tất cả trạng thái --</option>
+                        <option value="CHO_DUYET" th:selected="${trangThai == 'CHO_DUYET'}">Chờ duyệt</option>
+                        <option value="DA_DUYET" th:selected="${trangThai == 'DA_DUYET'}">Đã duyệt</option>
+                        <option value="TU_CHOI" th:selected="${trangThai == 'TU_CHOI'}">Từ chối</option>
+                        <option value="DA_HUY" th:selected="${trangThai == 'DA_HUY'}">Đã hủy</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Lọc phiếu</button>
+                    <a th:href="@{/kho/phieu-kho}" class="btn btn-sm btn-outline-secondary">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách phiếu kho -->
+    <div class="card card-clean">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Loại phiếu</th>
+                        <th>Nhà thuốc nguồn</th>
+                        <th>Đích / NCC / Lý do</th>
+                        <th>Người lập & Thời gian</th>
+                        <th class="text-end">Tổng giá trị</th>
+                        <th class="text-center">Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(danhSachPhieu)}">
+                        <td colspan="8" class="text-center text-muted py-4">Chưa có phiếu kho nào phù hợp.</td>
+                    </tr>
+                    <tr th:each="p : ${danhSachPhieu}">
+                        <td class="font-monospace fw-bold text-primary" th:text="${p.maPhieu}"></td>
+                        <td>
+                            <span th:replace="~{fragments/badges :: loaiPhieu(${p.loaiPhieu})}"></span>
+                        </td>
+                        <td class="small fw-semibold" th:text="${p.tenNhaThuoc}"></td>
+                        <td class="small">
+                            <span th:if="${p.loaiPhieu == 'DIEU_CHUYEN'}" th:text="${'→ ' + p.tenNhaThuocDich}"></span>
+                            <span th:if="${p.loaiPhieu == 'NHAP' or p.loaiPhieu == 'NHAP_KHO'}" class="text-success fw-semibold" th:text="${'NCC: ' + p.tenNhaCungCap}"></span>
+                            <span th:if="${p.loaiPhieu == 'XUAT_HUY'}" class="text-danger" th:text="${'Lý do: ' + p.lyDoHuy}"></span>
+                        </td>
+                        <td class="small">
+                            <div th:text="${p.tenNguoiLap}"></div>
+                            <small class="text-muted" th:text="${p.thoiGianLap}"></small>
+                        </td>
+                        <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(p.tongGiaTri, 0, 'POINT', 0, 'COMMA') + ' ₫'}"></td>
+                        <td class="text-center">
+                            <span th:replace="~{fragments/badges :: trangThaiPhieu(${p.trangThai})}"></span>
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-xem-phieu" th:data-id="${p.id}">
+                                <i class="bi bi-eye"></i> Chi tiết
+                            </button>
+                            <button type="button"
+                                    th:if="${p.trangThai == 'CHO_DUYET'}"
+                                    sec:authorize="hasAuthority('THUKHO')"
+                                    class="btn btn-sm btn-outline-danger ms-1 btn-huy-phieu"
+                                    th:data-id="${p.id}"
+                                    th:data-ma="${p.maPhieu}">
+                                <i class="bi bi-x-circle"></i> Hủy phiếu
+                            </button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template các lô thuốc khả dụng ẩn cho JS -->
+    <select id="pkTemplateLoOptions" class="d-none">
+        <option value="">-- Chọn lô thuốc còn khả dụng --</option>
+        <option th:each="lo : ${danhSachLoConTon}"
+                th:value="${lo.loThuocId}"
+                th:text="${lo.soLo + ' | ' + lo.tenThuoc + ' (Hạn: ' + lo.hanDung + ' | Khả dụng: ' + lo.soLuongKhaDung + ' ' + lo.donViTinh + ')'}"></option>
+    </select>
+
+    <!-- Modal lập phiếu điều chuyển -->
+    <div class="modal fade" id="modalDieuChuyen" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="formDieuChuyen" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-truck me-1 text-primary"></i>Lập phiếu điều chuyển liên nhà thuốc (<code>sp_TaoPhieuDieuChuyen</code>)</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Nhà thuốc nhận (Đích) <span class="text-danger">*</span></label>
+                            <select id="dcNhaThuocDichId" class="form-select form-select-sm" required>
+                                <option value="">-- Chọn nhà thuốc đích --</option>
+                                <option th:each="nt : ${danhSachNhaThuoc}"
+                                        th:if="${nt.id != nhaThuocHienTaiId}"
+                                        th:value="${nt.id}"
+                                        th:text="${nt.ma + ' - ' + nt.ten}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Ghi chú điều chuyển</label>
+                            <input type="text" id="dcGhiChu" class="form-control form-control-sm" placeholder="VD: Điều chuyển hỗ trợ cơ sở thiếu hàng">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-muted">Danh sách lô điều chuyển</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnDcThemDong">+ Thêm lô</button>
+                    </div>
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 72%">Lô thuốc xuất</th>
+                            <th style="width: 20%">Số lượng</th>
+                            <th style="width: 8%"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="tbodyDcLines"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Gửi phiếu chờ duyệt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal lập phiếu xuất hủy -->
+    <div class="modal fade" id="modalXuatHuy" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <form id="formXuatHuy" class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold text-danger"><i class="bi bi-trash3 me-1"></i>Lập phiếu xuất hủy thuốc (<code>sp_TaoPhieuXuatHuy</code>)</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold">Lý do xuất hủy <span class="text-danger">*</span></label>
+                            <select id="xhLyDo" class="form-select form-select-sm" required>
+                                <option value="HET_HAN">Hết hạn sử dụng (HET_HAN)</option>
+                                <option value="HU_HONG">Hư hỏng bao bì / chất lượng (HU_HONG)</option>
+                                <option value="THU_HOI">Thu hồi theo công văn Cục QLD (THU_HOI)</option>
+                                <option value="KHAC">Lý do khác (KHAC)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label small fw-bold">Ghi chú biên bản hủy</label>
+                            <input type="text" id="xhGhiChu" class="form-control form-control-sm" placeholder="VD: Đưa vào biệt trữ chờ hội đồng hủy">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-bold text-muted">Danh sách lô xuất hủy</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnXhThemDong">+ Thêm lô hủy</button>
+                    </div>
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th style="width: 72%">Lô thuốc cần hủy</th>
+                            <th style="width: 20%">Số lượng</th>
+                            <th style="width: 8%"></th>
+                        </tr>
+                        </thead>
+                        <tbody id="tbodyXhLines"></tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-sm btn-danger">Tạo phiếu xuất hủy (Chờ duyệt)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xem chi tiết phiếu kho -->
+    <div class="modal fade" id="modalChiTietPhieu" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Chi tiết phiếu kho: <span id="pkMaPhieu" class="font-monospace text-primary"></span></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-2 mb-3 small bg-light p-2 rounded border">
+                        <div class="col-md-6"><strong>Loại phiếu:</strong> <span id="pkLoaiPhieu"></span></div>
+                        <div class="col-md-6"><strong>Trạng thái:</strong> <span id="pkTrangThai"></span></div>
+                        <div class="col-md-6"><strong>Nhà thuốc nguồn:</strong> <span id="pkNhaThuoc"></span></div>
+                        <div class="col-md-6"><strong>Đích / NCC:</strong> <span id="pkDoiTac"></span></div>
+                        <div class="col-md-6"><strong>Người lập:</strong> <span id="pkNguoiLap"></span></div>
+                        <div class="col-md-6"><strong>Người duyệt:</strong> <span id="pkNguoiDuyet"></span></div>
+                        <div class="col-12"><strong>Ghi chú / Lý do:</strong> <span id="pkGhiChu"></span></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Mã thuốc</th>
+                                <th>Tên thuốc</th>
+                                <th>Số lô</th>
+                                <th>Hạn dùng</th>
+                                <th class="text-end">SL</th>
+                                <th class="text-end">Đơn giá vốn</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                            </thead>
+                            <tbody id="tbodyChiTietPhieu"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/kho/phieu-kho.js}"></script>
+</th:block>
+</body>
+</html>

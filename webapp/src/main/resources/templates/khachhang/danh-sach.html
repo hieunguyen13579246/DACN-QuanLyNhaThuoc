@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/main :: layout('Quản lý khách hàng', ~{::section}, ~{::script})}">
+<body>
+<section>
+    <div class="card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h6 class="fw-bold mb-0">Danh sách Khách hàng toàn chuỗi</h6>
+                <div class="small text-muted">Số điện thoại được che một phần ở danh sách theo quy tắc bảo mật BR16</div>
+            </div>
+            <button type="button" id="btnMoModalKhach" class="btn btn-sm btn-primary">+ Thêm khách hàng</button>
+        </div>
+
+        <form th:action="@{/khachhang}" method="get" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" name="tuKhoa" class="form-control form-control-sm"
+                       th:value="${tuKhoa}" placeholder="Tìm theo họ tên, số điện thoại hoặc mã khách hàng...">
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary flex-grow-1">Tìm kiếm</button>
+                <a th:href="@{/khachhang}" class="btn btn-sm btn-outline-secondary">Làm mới</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Mã KH</th>
+                    <th>Họ tên</th>
+                    <th>Số điện thoại (che BR16)</th>
+                    <th>Giới tính</th>
+                    <th>Năm sinh</th>
+                    <th>Khu vực</th>
+                    <th>Ghi chú dị ứng</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="kh : ${danhSachKhachHang}">
+                    <td class="fw-semibold" th:text="${kh.ma}"></td>
+                    <td th:text="${kh.hoTen}"></td>
+                    <td><code th:text="${kh.soDienThoaiChe}"></code></td>
+                    <td th:text="${kh.gioiTinh ?: '—'}"></td>
+                    <td th:text="${kh.namSinh ?: '—'}"></td>
+                    <td th:text="${kh.tenKhuVuc ?: '—'}"></td>
+                    <td class="small text-danger" th:text="${kh.ghiChuDiUng ?: 'Không'}"></td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 js-edit-khach"
+                                th:data-id="${kh.id}"
+                                th:data-ma="${kh.ma}"
+                                th:data-hoten="${kh.hoTen}"
+                                th:data-sdt="${kh.soDienThoai}"
+                                th:data-gioitinh="${kh.gioiTinh}"
+                                th:data-namsinh="${kh.namSinh}"
+                                th:data-khuvucid="${kh.khuVucId}"
+                                th:data-diachi="${kh.diaChi}"
+                                th:data-diung="${kh.ghiChuDiUng}">
+                            Sửa
+                        </button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(danhSachKhachHang)}">
+                    <td colspan="8" class="text-center text-muted py-3">Không tìm thấy khách hàng phù hợp.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modalKhachHang" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title fw-bold" id="modalKhachTitle">Thêm khách hàng</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="khId">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Mã KH</label>
+                            <input type="text" id="khMa" class="form-control form-control-sm" placeholder="Tự sinh nếu trống">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-semibold">Họ và tên *</label>
+                            <input type="text" id="khHoTen" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Số điện thoại *</label>
+                            <input type="text" id="khSdt" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Giới tính</label>
+                            <select id="khGioiTinh" class="form-select form-select-sm">
+                                <option value="Nam">Nam</option>
+                                <option value="Nu">Nữ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Năm sinh</label>
+                            <input type="number" id="khNamSinh" class="form-control form-control-sm" min="1920" max="2026" value="1985">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold">Quận / Huyện cư trú</label>
+                            <select id="khKhuVucId" class="form-select form-select-sm">
+                                <option value="">-- Chọn khu vực --</option>
+                                <option th:each="kv : ${danhSachKhuVuc}" th:value="${kv.id}" th:text="${kv.ten}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold">Địa chỉ</label>
+                            <input type="text" id="khDiaChi" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-semibold">Ghi chú dị ứng thuốc</label>
+                            <input type="text" id="khDiUng" class="form-control form-control-sm" placeholder="VD: Dị ứng Penicillin">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" id="btnLuuKhachHang" class="btn btn-sm btn-primary">Lưu thông tin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script th:src="@{/js/khachhang/khach-hang.js}"></script>
+</body>
+</html>
