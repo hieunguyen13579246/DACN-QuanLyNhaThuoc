@@ -35,8 +35,8 @@
 ### 2.2. Cấu hình kết nối Cơ sở dữ liệu
 Sao chép `.env.example` hoặc thiết lập biến môi trường (mặc định `application.properties` đã cấu hình sẵn để chạy ngay trên máy cục bộ):
 - `DB_URL`: `jdbc:sqlserver://localhost:1433;databaseName=IS009;encrypt=true;trustServerCertificate=true`
-- `DB_USER`: `is009_app`
-- `DB_PASS`: `Is009@AppPass2026!`
+- `DB_USERNAME`: `is009_app`
+- `DB_PASSWORD`: `Is009@AppPass2026!`
 - `SERVER_PORT`: `8080`
 
 ### 2.3. Chạy kiểm thử và khởi động ứng dụng
@@ -60,12 +60,15 @@ Tất cả tài khoản mẫu trong `database/06_seed_p1.sql` đều sử dụng
 | Email đăng nhập | Mật khẩu | Vai trò | Nhà thuốc trực thuộc | Phạm vi quyền hạn chính |
 | :--- | :---: | :--- | :--- | :--- |
 | **`qt01@nhathuoc.vn`** | `123456` | `QUANTRI` | Toàn chuỗi (`NULL`) | Quản trị danh mục chuỗi, cấu hình, người dùng, đối soát tồn kho, duyệt phiếu toàn chuỗi, xem & xuất Excel Dashboard toàn chuỗi |
-| **`ql01@nhathuoc.vn`** | `123456` | `QUANLY` | NT001 - Quận 1 (ID: 1) | Bán hàng POS, hủy giao dịch, duyệt phiếu điều chuyển/xuất hủy của NT001, định mức tồn, Dashboard nhà thuốc |
-| **`tk01@nhathuoc.vn`** | `123456` | `THUKHO` | NT001 - Quận 1 (ID: 1) | Nhập kho từ NCC (quét GS1), lập phiếu điều chuyển/xuất hủy, in tem mã vạch, xem & xuất Excel đề xuất nhập hàng |
+| **`ql01@nhathuoc.vn`** | `123456` | `QUANLY` | NT001 - Quận 1 (ID: 1) | Bán hàng POS, hủy giao dịch, duyệt phiếu nhập kho/điều chuyển/xuất hủy của NT001, định mức tồn, Dashboard nhà thuốc |
+| **`tk01@nhathuoc.vn`** | `123456` | `THUKHO` | NT001 - Quận 1 (ID: 1) | Lập phiếu nhập kho từ NCC (quét GS1), lập phiếu điều chuyển/xuất hủy, in tem mã vạch, xem & xuất Excel đề xuất nhập hàng |
 | **`ds01@nhathuoc.vn`** | `123456` | `DUOCSI` | NT001 - Quận 1 (ID: 1) | Bán hàng POS quét mã FEFO, tiếp nhận & tra cứu đơn thuốc, quản lý khách hàng, tra cứu thuốc bằng mã vạch |
-| **`ql02@nhathuoc.vn`** | `123456` | `QUANLY` | NT002 - Quận 3 (ID: 2) | Quản lý vận hành tại Nhà thuốc NT002 |
-| **`tk02@nhathuoc.vn`** | `123456` | `THUKHO` | NT002 - Quận 3 (ID: 2) | Thủ kho tại Nhà thuốc NT002 |
-| **`ds02@nhathuoc.vn`** | `123456` | `DUOCSI` | NT002 - Quận 3 (ID: 2) | Dược sĩ bán hàng tại Nhà thuốc NT002 |
+| **`ql02@nhathuoc.vn`** | `123456` | `QUANLY` | NT002 - Quận Bình Thạnh (ID: 2) | Quản lý vận hành tại Nhà thuốc NT002 |
+| **`tk02@nhathuoc.vn`** | `123456` | `THUKHO` | NT002 - Quận Bình Thạnh (ID: 2) | Thủ kho tại Nhà thuốc NT002 |
+| **`ds02@nhathuoc.vn`** | `123456` | `DUOCSI` | NT002 - Quận Bình Thạnh (ID: 2) | Dược sĩ bán hàng tại Nhà thuốc NT002 |
+| **`ql09@nhathuoc.vn`** | `123456` | `QUANLY` | NT009 - Quận Ninh Kiều, Cần Thơ (ID: 9) | Quản lý vận hành & duyệt phiếu tại Nhà thuốc NT009 |
+| **`tk09@nhathuoc.vn`** | `123456` | `THUKHO` | NT009 - Quận Ninh Kiều, Cần Thơ (ID: 9) | Thủ kho tại Nhà thuốc NT009 |
+| **`ds09@nhathuoc.vn`** | `123456` | `DUOCSI` | NT009 - Quận Ninh Kiều, Cần Thơ (ID: 9) | Dược sĩ bán hàng tại Nhà thuốc NT009 |
 | **`qt02@nhathuoc.vn`** | `123456` | `QUANTRI` | Toàn chuỗi (`NULL`) | Quản trị viên dự phòng toàn chuỗi |
 
 ---
@@ -83,7 +86,7 @@ Thanh menu bên trái tự động hiển thị các mục tương ứng với v
 | | **Tra cứu mã vạch** | 🔢 `bi-upc-scan` | `/thuoc/tra-cuu-ma-vach` | Tất cả vai trò |
 | | **Lịch sử giao dịch** | 🕒 `bi-clock-history` | `/banhang/lich-su` | `DUOCSI`, `QUANLY`, `QUANTRI` |
 | | **Hủy giao dịch** | ❌ `bi-x-octagon-fill` | `/banhang/huy-giao-dich` | `QUANLY` |
-| **Kho & Mã vạch** | **Nhập kho (Quét GS1)** | 📦 `bi-box-seam-fill` | `/kho/nhap-kho` | `THUKHO`, `QUANLY` |
+| **Kho & Mã vạch** | **Nhập kho (Quét GS1)** | 📦 `bi-box-seam-fill` | `/kho/nhap-kho` | `THUKHO`, `QUANLY`, `QUANTRI` |
 | | **Tồn kho & Lô** | 📑 `bi-layers-fill` | `/kho/ton-kho` | Tất cả vai trò |
 | | **Điều chuyển & Xuất hủy** | 🔄 `bi-arrow-left-right` | `/kho/phieu-kho` | `THUKHO`, `QUANLY`, `QUANTRI` |
 | | **In tem mã vạch** | 🖨️ `bi-printer-fill` | `/kho/in-tem` | `THUKHO`, `QUANLY`, `QUANTRI` |
@@ -172,14 +175,15 @@ Tầng `ErrorCodeMapper` tự động bắt mã lỗi SQL Server (`50001`–`500
 
 1. **Bước 1 – Quản trị danh mục & Gán mã vạch (`qt01@nhathuoc.vn` / `123456`):**
    - Đăng nhập tài khoản `qt01@nhathuoc.vn`. Trên Sidebar bên trái, vào mục **Thuốc, Nhóm & Mã vạch** (`/thuoc/quan-ly`), chọn một thuốc và thử nhập mã EAN-13 sai chữ số kiểm tra → giao diện báo lỗi ngay tức thì. Lưu mã vạch hợp lệ qua `sp_ThemMaVachThuoc`.
-2. **Bước 2 – Nhập kho bằng mã vạch & GS1 (`tk01@nhathuoc.vn` / `123456`):**
-   - Đăng nhập `tk01@nhathuoc.vn` (Thủ kho NT001 - Quận 1). Vào mục **Nhập kho (Quét GS1)** (`/kho/nhap-kho`), quét hoặc dán mã `(01)08935001200012(17)280630(10)LONT2601` vào ô GS1 → hệ thống tự động điền Thuốc, Số lô `LONT2601` và Hạn dùng `30/06/2028`. Nhập số lượng `100`, giá nhập `12000` và bấm **Hoàn tất nhập kho** (`sp_NhapKho`).
+2. **Bước 2 – Lập phiếu nhập kho bằng mã vạch & GS1 và Duyệt nhập (`tk01@nhathuoc.vn` → `ql01@nhathuoc.vn`):**
+   - Đăng nhập `tk01@nhathuoc.vn` (Thủ kho NT001 - Quận 1). Vào mục **Nhập kho thuốc** (`/kho/nhap-kho`), quét hoặc dán mã `(01)08935001200012(17)280630(10)LONT2601` vào ô GS1 → hệ thống tự động điền Thuốc, Số lô `LONT2601` và Hạn dùng `30/06/2028`. Nhập số lượng `100`, giá nhập `12000` và bấm **Gửi phiếu nhập chờ duyệt** (`sp_NhapKho`) → phiếu ở trạng thái **`Chờ duyệt (CHO_DUYET)`** (chưa cộng tồn kho ngay).
+   - Đăng nhập `ql01@nhathuoc.vn` (hoặc `qt01@nhathuoc.vn`), vào mục **Duyệt phiếu kho** (`/kho/duyet-phieu`), kiểm tra chi tiết và bấm **Duyệt** (`sp_DuyetPhieuKho`) → thuốc chính thức được cộng vào `TonKho` và ghi nhận `BienDongKho`.
 3. **Bước 3 – In tem mã vạch & Kiểm tra tồn kho FEFO (`tk01@nhathuoc.vn`):**
    - Vào mục **In tem mã vạch** (`/kho/in-tem`), chọn lô vừa nhập để tạo lưới tem mã vạch.
    - Vào mục **Tồn kho & Lô** (`/kho/ton-kho`) hoặc **Tra cứu mã vạch** (`/thuoc/tra-cuu-ma-vach`), quét mã vạch của thuốc để xem danh sách các lô đang tồn được sắp xếp tự động theo thứ tự hạn dùng tăng dần (**FEFO**).
 4. **Bước 4 – Bán hàng POS thông thường & Xem trước phân lô FEFO (`ds01@nhathuoc.vn` / `123456`):**
-   - Đăng nhập `ds01@nhathuoc.vn`. Vào mục **Bán hàng POS** (`/banhang/pos`), quét mã vạch thuốc không kê đơn (OTC).
-   - Hệ thống tự động thêm vào giỏ và hiển thị bảng **Dự kiến phân bổ lô theo nguyên tắc FEFO** (`sp_XemTruocFEFO`). Bấm **Thanh toán (`F9`)** (`sp_BanHang`) → mở cửa sổ **In hóa đơn**.
+   - Đăng nhập `ds01@nhathuoc.vn`. Vào mục **Bán hàng tại quầy (POS)** (`/banhang/pos`), quét mã vạch thuốc không kê đơn (OTC).
+   - Hệ thống tự động thêm vào giỏ và hiển thị bảng **Phân bổ lô tự động theo FEFO** (`sp_XemTruocFEFO`). Chọn phương thức thanh toán (`Tiền mặt`, `Chuyển khoản QR`, hoặc `Thẻ ngân hàng`; với `Tiền mặt` nhập **Khách đưa** hoặc chọn mệnh giá nhanh để hệ thống tự tính **Tiền thối lại khách**), sau đó bấm **Thanh toán & In hóa đơn (`F9`)** (`sp_BanHang`) → mở cửa sổ **In hóa đơn**.
 5. **Bước 5 – Kiểm soát bán thuốc kê đơn Rx (`ds01@nhathuoc.vn`):**
    - Tại **Bán hàng POS** (`/banhang/pos`), quét một thuốc kháng sinh kê đơn (Rx) và bấm Thanh toán khi chưa gắn đơn thuốc → Hệ thống chặn ngay với mã lỗi **`50003`** (*Thiếu đơn thuốc kê đơn*).
    - Sang mục **Đơn thuốc** (`/donthuoc`), tiếp nhận đơn thuốc mới cho khách hàng, kê thuốc Rx số lượng `2`. Quay lại **Bán hàng POS**, tìm khách hàng theo SĐT, chọn đơn thuốc vừa tạo và bấm Thanh toán → Giao dịch thành công, số lượng đã bán trong đơn thuốc tự động cập nhật.

@@ -10,6 +10,10 @@
 
 ## Khởi chạy nhanh
 
-1. Khởi tạo cơ sở dữ liệu `IS009` trên SQL Server bằng bộ script trong `database/` theo thứ tự `01_schema.sql` → `07_security.sql` (mã hóa UTF-8 với `sqlcmd -f 65001`).
+1. Khởi tạo cơ sở dữ liệu `IS009` trên SQL Server bằng script tự động trong `database/` (thực thi tuần tự `01_schema.sql` → `07_security.sql` chuẩn UTF-8 `sqlcmd -f 65001`):
+   ```powershell
+   cd database
+   .\run_all.ps1 -ServerInstance "localhost"
+   ```
 2. Di chuyển vào `webapp/`, kiểm tra kết nối SQL Server trong `src/main/resources/application.properties` và chạy ứng dụng với `mvn spring-boot:run`.
 3. Truy cập `http://localhost:8080` để sử dụng hệ thống.
